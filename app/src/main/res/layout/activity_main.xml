@@ -7,7 +7,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorWindowBackground"
-    tools:context="com.dmitrybrant.modelviewer.MainActivity">
+    tools:context="com.dmitrybrant.modelviewer.MainActivityPlyParser">
 
     <ProgressBar
         android:id="@+id/model_progress_bar"
