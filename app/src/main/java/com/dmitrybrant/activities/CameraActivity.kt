@@ -29,6 +29,7 @@ import com.dmitrybrant.modelviewer.R
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.io.ObjectOutputStream
 
 /**
  * Created by dharamveer on 20/3/18.
@@ -90,14 +91,14 @@ class CameraActivity : Activity(), Camera.PictureCallback, SurfaceHolder.Callbac
 
     private fun createDirectoryAndSaveFile(imageToSave: Bitmap, fileName: String) {
 
-        val imagesFolder = File(Environment.getExternalStorageDirectory().toString() + "/a3dyou")
+        val direct = File(Environment.getExternalStorageDirectory().toString() + "/DirName")
 
-        if (!imagesFolder.exists()) {
-            val wallpaperDirectory = File("/sdcard/a3dyou/")
+        if (!direct.exists()) {
+            val wallpaperDirectory = File("/sdcard/DirName/")
             wallpaperDirectory.mkdirs()
         }
 
-        val file = File(File("/sdcard/a3dyou/"), fileName)
+        val file = File(File("/sdcard/DirName/"), fileName)
         if (file.exists()) {
             file.delete()
         }
@@ -212,10 +213,12 @@ class CameraActivity : Activity(), Camera.PictureCallback, SurfaceHolder.Callbac
     }
 
 
+
     override fun onPictureTaken(data: ByteArray, camera: Camera) {
         mCameraData = data
 
         setupImageDisplay()
+
     }
 
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
@@ -251,7 +254,7 @@ class CameraActivity : Activity(), Camera.PictureCallback, SurfaceHolder.Callbac
     private fun setupImageDisplay() {
         val bitmap = BitmapFactory.decodeByteArray(mCameraData, 0, mCameraData!!.size)
 
-            createDirectoryAndSaveFile(bitmap,"new");
+        createDirectoryAndSaveFile(bitmap,"a3dyou");
 
         mCameraImage!!.setImageBitmap(RotateBitmap(bitmap, 90f))
         mCamera!!.stopPreview()

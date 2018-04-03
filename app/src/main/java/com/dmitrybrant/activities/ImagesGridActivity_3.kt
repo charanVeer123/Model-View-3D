@@ -7,20 +7,26 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.os.Handler
+import android.provider.MediaStore
 import android.support.v7.app.AppCompatActivity
 import android.view.*
 import android.widget.BaseAdapter
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import com.dmitrybrant.models.ImagesModel
 import com.dmitrybrant.modelviewer.MainActivityPlyParser
 import com.dmitrybrant.modelviewer.R
 import dmax.dialog.SpotsDialog
 import kotlinx.android.synthetic.main.activity_captured_images.*
 import kotlinx.android.synthetic.main.grid_item_layout.view.*
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -133,6 +139,9 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
     }
 
+
+    private var mCapturedImageURI: Uri? = null
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == TAKE_PICTURE_REQUEST_B) {
             if (resultCode == Activity.RESULT_OK) {
@@ -144,20 +153,49 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
                 }
 
 
+
+
+
                 val extras = data?.extras
                 val cameraData = extras!!.getByteArray(CameraActivity.EXTRA_CAMERA_DATA)
-
-
 
                 if (cameraData != null) {
                     mCameraBitmap = BitmapFactory.decodeByteArray(cameraData, 0, cameraData.size)
 
 
+
+
                     imageViewGl!!.setImageBitmap(RotateBitmap(mCameraBitmap!!,90f))
 
-                    //CameraCharacteristics.LENS_INTRINSIC_CALIBRATION
-                    //CameraCharacteristics.LENS_RADIAL_DISTORTION
-                    //CameraCharacteristics.LENS_POSE_ROTATION
+
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+
+                        CameraCharacteristics.LENS_INTRINSIC_CALIBRATION
+                        CameraCharacteristics.LENS_RADIAL_DISTORTION
+                        CameraCharacteristics.LENS_POSE_ROTATION
+
+                    }
+                    mCameraBitmap!!.byteCount;
+
+
+                    // CALL THIS METHOD TO GET THE URI FROM THE BITMAP
+                   //  mCapturedImageURI = getImageUri(applicationContext, mCameraBitmap!!)
+
+                    // CALL THIS METHOD TO GET THE ACTUAL PATH
+                    //val finalFile = File(getRealPathFromURI(mCapturedImageURI!!))
+
+                  //  System.out.println(finalFile)
+
+
+                    val saveFile = openFileForImage()
+                    if (saveFile != null) {
+                        saveImageToFile(saveFile)
+                    } else {
+                        Toast.makeText(this@ImagesGridActivity_3, "Unable to open file for saving image.",
+                                Toast.LENGTH_LONG).show()
+                    }
+
 
 
                     imageViewGl!!.setOnTouchListener(this)
@@ -172,7 +210,68 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
     }
 
 
+    private fun saveImageToFile(file: File?) {
+        if (mCameraBitmap != null) {
+            var outStream: FileOutputStream? = null
+            try {
+                outStream = FileOutputStream(file!!)
+                if (!mCameraBitmap!!.compress(Bitmap.CompressFormat.PNG, 100, outStream)) {
+                    Toast.makeText(this@ImagesGridActivity_3, "Unable to save image to file.",
+                            Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(this@ImagesGridActivity_3, "Saved image to: " + file.path,
+                            Toast.LENGTH_LONG).show()
+                }
+                outStream.close()
+            } catch (e: Exception) {
+                Toast.makeText(this@ImagesGridActivity_3, "Unable to save image to file.",
+                        Toast.LENGTH_LONG).show()
+            }
 
+        }
+    }
+
+    private fun openFileForImage(): File? {
+        var imageDirectory: File? = null
+        val storageState = Environment.getExternalStorageState()
+        if (storageState == Environment.MEDIA_MOUNTED) {
+            imageDirectory = File(
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+                    "a3dyou")
+            if (!imageDirectory.exists() && !imageDirectory.mkdirs()) {
+                imageDirectory = null
+            } else {
+                val dateFormat = SimpleDateFormat("yyyy_mm_dd_hh_mm",
+                        Locale.getDefault())
+
+                return File(imageDirectory.path +
+                        File.separator + "image_" +
+                        dateFormat.format(Date()) + ".png")
+            }
+        }
+        return null
+    }
+
+
+
+
+    private fun getRealPathFromURI(tempUri: Uri): String? {
+
+        val cursor = contentResolver.query(tempUri, null, null, null, null)
+        cursor.moveToFirst();
+        val idx = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA)
+        return cursor.getString(idx);
+
+    }
+
+    private fun getImageUri(applicationContext: Context?, photo: Bitmap): Uri {
+
+        val bytes = ByteArrayOutputStream()
+        photo.compress(Bitmap.CompressFormat.PNG, 100, bytes);
+        val path: String = MediaStore.Images.Media.insertImage(applicationContext!!.contentResolver,photo,"Title",null)
+        return Uri.parse(path);
+
+    }
 
 
     fun RotateBitmap(source: Bitmap, angle: Float): Bitmap {
