@@ -21,6 +21,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -57,8 +59,7 @@ public class MainActivityPlyParser extends AppCompatActivity {
     private static final int READ_PERMISSION_REQUEST = 100;
     private static final int OPEN_DOCUMENT_REQUEST = 101;
 
-    //private static final String[] SAMPLE_MODELS = new String[] { "bunny.stl", "dragon.stl", "lucy.stl","happy.ply" };
-    private static final String[] SAMPLE_MODELS = new String[] {"happy.ply","controller_ascii.ply" };
+    //private static final String[] SAMPLE_MODELS = new String[] {  "dragon.stl" };
     private static int sampleModelIndex;
 
     private ModelViewerApplication app;
@@ -69,6 +70,10 @@ public class MainActivityPlyParser extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Hide status bar
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
         setContentView(R.layout.activity_main);
         app = ModelViewerApplication.getInstance();
 
@@ -76,11 +81,12 @@ public class MainActivityPlyParser extends AppCompatActivity {
         progressBar = findViewById(R.id.model_progress_bar);
         progressBar.setVisibility(View.GONE);
 
-        findViewById(R.id.vr_fab).setOnClickListener((View v) -> startVrActivity());
 
         if (getIntent().getData() != null && savedInstanceState == null) {
             beginLoadModel(getIntent().getData());
         }
+
+        loadSampleModel();
     }
 
     @Override
@@ -108,28 +114,6 @@ public class MainActivityPlyParser extends AppCompatActivity {
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return super.onCreateOptionsMenu(menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.menu_open_model:
-                checkReadPermissionThenOpen();
-                return true;
-            case R.id.menu_load_sample:
-                loadSampleModel();
-                return true;
-            case R.id.menu_about:
-                showAboutDialog();
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
-        }
-    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
@@ -269,7 +253,7 @@ public class MainActivityPlyParser extends AppCompatActivity {
 
     private void setCurrentModel(@NonNull Model model) {
         createNewModelView(model);
-        Toast.makeText(getApplicationContext(), R.string.open_model_success, Toast.LENGTH_SHORT).show();
+     //   Toast.makeText(getApplicationContext(), R.string.open_model_success, Toast.LENGTH_SHORT).show();
         setTitle(model.getTitle());
         progressBar.setVisibility(View.GONE);
     }
@@ -284,19 +268,16 @@ public class MainActivityPlyParser extends AppCompatActivity {
 
     private void loadSampleModel() {
         try {
-            InputStream stream = getApplicationContext().getAssets().open(SAMPLE_MODELS[sampleModelIndex++ % SAMPLE_MODELS.length]);
+            //InputStream stream = getApplicationContext().getAssets().open(SAMPLE_MODELS[sampleModelIndex++ % SAMPLE_MODELS.length]);
+            InputStream stream = getApplicationContext().getAssets().open("girl.ply");
+
             setCurrentModel(new PlyModel(stream));
             stream.close();
+
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void showAboutDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.app_name)
-                .setMessage(R.string.about_text)
-                .setPositiveButton(android.R.string.ok, null)
-                .show();
-    }
+
 }

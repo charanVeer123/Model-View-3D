@@ -7,6 +7,7 @@ import android.os.Vibrator;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Log;
+import android.view.WindowManager;
 
 import com.dmitrybrant.modelviewer.Light;
 import com.dmitrybrant.modelviewer.Model;
@@ -80,6 +81,10 @@ public class ModelGvrActivity extends GvrActivity implements GvrView.StereoRende
     }
 
     public void initializeGvrView() {
+
+        // Hide status bar
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
         setContentView(R.layout.activity_gvr);
 
         GvrView gvrView = findViewById(R.id.gvr_view);

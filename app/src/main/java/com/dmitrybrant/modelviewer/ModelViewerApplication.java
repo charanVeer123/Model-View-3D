@@ -1,7 +1,12 @@
 package com.dmitrybrant.modelviewer;
 
 import android.app.Application;
+import android.content.Context;
 import android.support.annotation.Nullable;
+import android.support.multidex.MultiDex;
+import android.support.v7.app.AppCompatDelegate;
+
+import uk.co.chrisjenx.calligraphy.CalligraphyConfig;
 
 /*
  * Copyright 2017 Dmitry Brant. All rights reserved.
@@ -45,5 +50,20 @@ public class ModelViewerApplication extends Application
     {
         super.onCreate();
         INSTANCE = this;
+        AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
+
+        CalligraphyConfig.initDefault(new CalligraphyConfig.Builder()
+                .setDefaultFontPath("fonts/regular.ttf")
+                .setFontAttrId(R.attr.fontPath)
+                .build()
+        );
+
+    }
+
+    @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(base);
+        MultiDex.install(this);
+
     }
 }

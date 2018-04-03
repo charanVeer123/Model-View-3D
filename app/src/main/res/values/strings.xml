@@ -1,12 +1,25 @@
 <resources>
-    <string name="app_name">3D Model Viewer</string>
-    <string name="about">About…</string>
-    <string name="about_text">This app allows you to view 3D models that you have downloaded, or open 3D models directly from your browser. Supports STL, OBJ, and PLY models. Tap the VR button at the bottom to view the model in your VR headset!\n\nCopyright © 2017 Dmitry Brant.</string>
-    <string name="load_sample">Load sample</string>
     <string name="read_permission_failed">Please allow read permission to open model files.</string>
-    <string name="open_model">Open model…</string>
-    <string name="open_model_success">Model loaded successfully.</string>
     <string name="open_model_error">Failed to load model.</string>
-    <string name="view_vr">View in VR mode</string>
     <string name="view_vr_not_loaded">Please load a model first.</string>
+
+    <string name="app_name">a3Dyou</string>
+
+    <string name="welcometext">Welcome to a3Dyou Creating 3D Avatar of yourself cannot get simpler than this!!</string>
+
+    <string name="captureimages">Capture Images</string>
+    <string name="create">CREATE</string>
+    <string name="complete">COMPLETE</string>
+    <string name="signin">SIGN IN</string>
+    <string name="dmodel">3D Model</string>
+    <string name="termsandconditions">Terms and conditions</string>
+    <string name="forgetpsw">Forget Password?</string>
+    <string name="areyousuretologout">Are you sure you want to logout?</string>
+    <string name="action_sign_in_short">Sign in</string>
+
+    <string name="capture_image">Capture</string>
+
+    <string name="done">Done</string>
+    <string name="recapture_image">Retake Picture</string>
+
 </resources>
