@@ -162,11 +162,14 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
                 if (cameraData != null) {
                     mCameraBitmap = BitmapFactory.decodeByteArray(cameraData, 0, cameraData.size)
 
+                   // val photo: Bitmap// this is your image.
+                    val stream = ByteArrayOutputStream()
+                    mCameraBitmap!!.compress(Bitmap.CompressFormat.PNG, 100, stream)
+                    val byteArray = stream.toByteArray()
 
 
 
                     imageViewGl!!.setImageBitmap(RotateBitmap(mCameraBitmap!!,90f))
-
 
 
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {

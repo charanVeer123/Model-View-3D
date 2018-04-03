@@ -6,4 +6,7 @@ package com.dmitrybrant.response;
 
 public class LeftImageResponse {
 
+
+
+
 }

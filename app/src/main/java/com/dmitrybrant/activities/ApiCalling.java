@@ -4,6 +4,11 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import com.dmitrybrant.RetrofitLibrary.RetrofitLibrary;
+import com.dmitrybrant.response.LeftImageResponse;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 
 public class ApiCalling extends Activity{
@@ -33,6 +38,21 @@ public class ApiCalling extends Activity{
             }
         });*/
 
+
+  restClient.leftImage().enqueue(new Callback<LeftImageResponse>() {
+      @Override
+      public void onResponse(Call<LeftImageResponse> call, Response<LeftImageResponse> response) {
+
+          if(response.isSuccessful()){
+
+          }
+      }
+
+      @Override
+      public void onFailure(Call<LeftImageResponse> call, Throwable t) {
+
+      }
+  });
 
     }
 }
