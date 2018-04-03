@@ -1,5 +1,6 @@
 package com.dmitrybrant.RetrofitLibrary;
 
+import com.dmitrybrant.response.LeftImageResponse;
 import com.dmitrybrant.response.UUIDResponse;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -62,7 +63,9 @@ public class RetrofitLibrary {
         Call<UUIDResponse> isUUID();
 
 
-       // @POST("")
+        @POST("images/left?uuid=8f1bc972-84cf-4106-b019-f9a1a5a728cf")
+        Call<LeftImageResponse> leftImage();
+
 /*
 
        //------------------------1
@@ -81,7 +84,6 @@ public class RetrofitLibrary {
         Call<UpdateLatLong> updateLatLng(@Body HashMap<String, String> hashMap);
 
 */
-
 
 
 
