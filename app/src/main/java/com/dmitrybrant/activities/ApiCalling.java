@@ -97,32 +97,90 @@ public class ApiCalling extends Activity{
             assert chars != null;
             float[] facing = chars.get(CameraCharacteristics.LENS_INTRINSIC_CALIBRATION);
 
-
-
             JSONObject jsonObjectK  = new JSONObject();
-            try {
-                jsonObjectK.put("fx",2.5);
-                jsonObjectK.put("fy",2.5);
-                jsonObjectK.put("cx",2.5);
-                jsonObjectK.put("cy",2.5);
-                jsonObjectK.put("skew",2.5);
 
-            } catch (JSONException e) {
-                e.printStackTrace();
+            if(facing==null){
+
+                try {
+                    jsonObjectK.put("fx",null);
+                    jsonObjectK.put("fy",null);
+                    jsonObjectK.put("cx",null);
+                    jsonObjectK.put("cy",null);
+                    jsonObjectK.put("skew",null);
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            }
+            else {
+
+                try {
+                    jsonObjectK.put("fx",2.5);
+                    jsonObjectK.put("fy",2.5);
+                    jsonObjectK.put("cx",2.5);
+                    jsonObjectK.put("cy",2.5);
+                    jsonObjectK.put("skew",2.5);
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
             }
 
 
-            JSONObject jsonObjectDistortion  = new JSONObject();
-            try {
-                jsonObjectDistortion.put("k1",2.5);
-                jsonObjectDistortion.put("k2",2.5);
-                jsonObjectDistortion.put("k3",2.5);
-                jsonObjectDistortion.put("k4",2.5);
-                jsonObjectDistortion.put("p1",2.5);
-                jsonObjectDistortion.put("p2",2.5);
+            float[] distortion = new float[4];
 
-            } catch (JSONException e) {
+            CameraManager managerDistor =
+                    (CameraManager)getSystemService(CAMERA_SERVICE);
+            CameraCharacteristics charsDistor = null;
+
+            try {
+                assert managerDistor != null;
+                for (String cameraId : managerDistor.getCameraIdList()) {
+                    charsDistor  = managerDistor.getCameraCharacteristics(cameraId);
+                }
+            } catch (Exception e) {
                 e.printStackTrace();
+            }
+            assert charsDistor != null;
+
+
+            distortion = charsDistor.get(CameraCharacteristics.LENS_RADIAL_DISTORTION);
+
+            JSONObject jsonObjectDistortion  = new JSONObject();
+
+            if(distortion==null){
+
+                try {
+                    jsonObjectDistortion.put("k1",null);
+                    jsonObjectDistortion.put("k2",null);
+                    jsonObjectDistortion.put("k3",null);
+                    jsonObjectDistortion.put("k4",null);
+                    jsonObjectDistortion.put("p1",null);
+                    jsonObjectDistortion.put("p2",null);
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+
+            }
+            else {
+
+                try {
+                    jsonObjectDistortion.put("k1",null);
+                    jsonObjectDistortion.put("k2",null);
+                    jsonObjectDistortion.put("k3",null);
+                    jsonObjectDistortion.put("k4",null);
+                    jsonObjectDistortion.put("p1",null);
+                    jsonObjectDistortion.put("p2",null);
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+
             }
 
             JSONObject jsonObjectIntrinsics  = new JSONObject();
@@ -134,6 +192,8 @@ public class ApiCalling extends Activity{
             } catch (JSONException e) {
                 e.printStackTrace();
             }
+
+
 
             /*End-------------------intrinsics Object-----------------------------End*/
 
@@ -166,9 +226,9 @@ public class ApiCalling extends Activity{
             //Extrinsics Object
             JSONObject jsonObjectRotationVec  = new JSONObject();
             try {
-                jsonObjectRotationVec.put("x",1.5);
-                jsonObjectRotationVec.put("y",1.5);
-                jsonObjectRotationVec.put("z",1.5);
+                jsonObjectRotationVec.put("x",mSensorX);
+                jsonObjectRotationVec.put("y",mSensorY);
+                jsonObjectRotationVec.put("z",mSensorZ);
 
             } catch (JSONException e) {
                 e.printStackTrace();
