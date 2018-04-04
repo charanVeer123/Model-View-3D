@@ -153,7 +153,6 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
     }
 
-
     @Throws(IOException::class)
     fun createImageFile(): File {
         val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())

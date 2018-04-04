@@ -2,6 +2,7 @@ package com.dmitrybrant.dialogs;
 
 import android.app.Dialog;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
@@ -11,6 +12,7 @@ import android.view.Window;
 import android.widget.Button;
 import android.widget.CheckBox;
 
+import com.dmitrybrant.activities.ImagesGridActivity_3;
 import com.dmitrybrant.modelviewer.R;
 
 public class InstructionDialog extends Dialog{
@@ -43,6 +45,7 @@ public class InstructionDialog extends Dialog{
             public void onClick(View v) {
 
 
+                getContext().startActivity(new Intent(getContext(),ImagesGridActivity_3.class));
                 dismiss();
             }
         });
