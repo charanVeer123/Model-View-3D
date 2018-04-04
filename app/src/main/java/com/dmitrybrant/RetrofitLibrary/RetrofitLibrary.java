@@ -87,24 +87,7 @@ public class RetrofitLibrary {
         @POST("images/back?uuid=8f1bc972-84cf-4106-b019-f9a1a5a728cf")
         Call<BackImageResponse> uploadbackImage(@Part("images\"; filename=\"back.png\" ") RequestBody file);
 
-/*
 
-       //------------------------1
-       as @POST("isPhoneNoExist")
-        Call<PhoneNoSuccess> isPhoneNoExist(@Body HashMap<String, String> hhMap);
-
-
-        //------------------------10
-        @POST("validateOTP")
-        Call<ValidateOTPSuccess> validateOTP(@Body HashMap<String, String> hashMap);
-
-
-
-
-        @POST("updateLatLng")
-        Call<UpdateLatLong> updateLatLng(@Body HashMap<String, String> hashMap);
-
-*/
 
 
 

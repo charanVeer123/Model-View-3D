@@ -24,6 +24,7 @@ import com.dmitrybrant.RetrofitLibrary.RetrofitLibrary
 import com.dmitrybrant.models.ImagesModel
 import com.dmitrybrant.modelviewer.MainActivityPlyParser
 import com.dmitrybrant.modelviewer.R
+import com.dmitrybrant.response.BackImageResponse
 import com.dmitrybrant.response.FrontImageResponse
 import com.dmitrybrant.response.LeftImageResponse
 import com.dmitrybrant.response.RightImageResponse
@@ -162,7 +163,6 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
                 }
 
 
-
                 val extras = data?.extras
                 val cameraData = extras!!.getByteArray(CameraActivity.EXTRA_CAMERA_DATA)
 
@@ -172,9 +172,7 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
                    // val photo: Bitmap// this is your image.
                     val stream = ByteArrayOutputStream()
                     mCameraBitmap!!.compress(Bitmap.CompressFormat.PNG, 100, stream)
-                    val byteArray = stream.toByteArray()
 
-                   // val body = RequestBody.create(MediaType.parse("application/octet-stream"), byteArray)
 
                     val restClient = RetrofitLibrary.getClient()
 
@@ -186,10 +184,10 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
                     // CALL THIS METHOD TO GET THE ACTUAL PATH
                     val finalFile = File(getRealPathFromURI(mCapturedImageURI!!))
 
-                    //  System.out.println(finalFile)
 
                     val requestFile = RequestBody.create(MediaType.parse(contentResolver.getType(mCapturedImageURI)!!), finalFile)
 
+                    //Api for left image
                     restClient.uploadleftImage(requestFile).enqueue(object : retrofit2.Callback<LeftImageResponse> {
                         override fun onResponse(call: Call<LeftImageResponse>, response: Response<LeftImageResponse>) {
 
@@ -207,6 +205,7 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
                         }
                     })
 
+                    //Api for front image
                     restClient.uploadfrontImage(requestFile).enqueue(object : retrofit2.Callback<FrontImageResponse> {
 
                         override fun onResponse(call: Call<FrontImageResponse>, response: Response<FrontImageResponse>) {
@@ -226,7 +225,7 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
                     })
 
-
+                    //Api for right image
                     restClient.uploadrightImage(requestFile).enqueue(object : retrofit2.Callback<RightImageResponse>{
 
                         override fun onResponse(call: Call<RightImageResponse>, response: Response<RightImageResponse>) {
@@ -244,6 +243,24 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
                     })
 
+
+                    //Api for back image
+                    restClient.uploadbackImage(requestFile).enqueue(object : retrofit2.Callback<BackImageResponse>{
+                        override fun onResponse(call: Call<BackImageResponse>, response: Response<BackImageResponse>) {
+                            if (response.isSuccessful) {
+
+                                Toast.makeText(this@ImagesGridActivity_3, "File Uploaded Successfully...", Toast.LENGTH_LONG).show();
+                            } else {
+                                Toast.makeText(this@ImagesGridActivity_3, "Some error occurred...", Toast.LENGTH_LONG).show();
+                            }
+
+                        }
+
+                        override fun onFailure(call: Call<BackImageResponse>?, t: Throwable?) {
+                            Toast.makeText(this@ImagesGridActivity_3,t.toString(),Toast.LENGTH_SHORT).show()
+                        }
+
+                    })
 
 
                     imageViewGl!!.setImageBitmap(RotateBitmap(mCameraBitmap!!,90f))
