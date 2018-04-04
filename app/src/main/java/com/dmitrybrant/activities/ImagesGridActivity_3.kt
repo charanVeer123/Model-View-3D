@@ -20,12 +20,21 @@ import android.widget.BaseAdapter
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import com.dmitrybrant.RetrofitLibrary.RetrofitLibrary
 import com.dmitrybrant.models.ImagesModel
 import com.dmitrybrant.modelviewer.MainActivityPlyParser
 import com.dmitrybrant.modelviewer.R
+import com.dmitrybrant.response.FrontImageResponse
+import com.dmitrybrant.response.LeftImageResponse
+import com.dmitrybrant.response.RightImageResponse
 import dmax.dialog.SpotsDialog
 import kotlinx.android.synthetic.main.activity_captured_images.*
 import kotlinx.android.synthetic.main.grid_item_layout.view.*
+import okhttp3.Callback
+import okhttp3.MediaType
+import okhttp3.RequestBody
+import retrofit2.Call
+import retrofit2.Response
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -154,8 +163,6 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
 
 
-
-
                 val extras = data?.extras
                 val cameraData = extras!!.getByteArray(CameraActivity.EXTRA_CAMERA_DATA)
 
@@ -166,6 +173,76 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
                     val stream = ByteArrayOutputStream()
                     mCameraBitmap!!.compress(Bitmap.CompressFormat.PNG, 100, stream)
                     val byteArray = stream.toByteArray()
+
+                   // val body = RequestBody.create(MediaType.parse("application/octet-stream"), byteArray)
+
+                    val restClient = RetrofitLibrary.getClient()
+
+                    //creating request body for file
+
+                    // CALL THIS METHOD TO GET THE URI FROM THE BITMAP
+                      mCapturedImageURI = getImageUri(applicationContext, mCameraBitmap!!)
+
+                    // CALL THIS METHOD TO GET THE ACTUAL PATH
+                    val finalFile = File(getRealPathFromURI(mCapturedImageURI!!))
+
+                    //  System.out.println(finalFile)
+
+                    val requestFile = RequestBody.create(MediaType.parse(contentResolver.getType(mCapturedImageURI)!!), finalFile)
+
+                    restClient.uploadleftImage(requestFile).enqueue(object : retrofit2.Callback<LeftImageResponse> {
+                        override fun onResponse(call: Call<LeftImageResponse>, response: Response<LeftImageResponse>) {
+
+                            if(response.isSuccessful) {
+
+                                Toast.makeText(this@ImagesGridActivity_3, "File Uploaded Successfully...", Toast.LENGTH_LONG).show();
+                            } else {
+                                Toast.makeText(this@ImagesGridActivity_3, "Some error occurred...", Toast.LENGTH_LONG).show();
+                            }
+                        }
+
+                        override fun onFailure(call: Call<LeftImageResponse>, t: Throwable) {
+                            Toast.makeText(this@ImagesGridActivity_3,t.toString(),Toast.LENGTH_SHORT).show()
+
+                        }
+                    })
+
+                    restClient.uploadfrontImage(requestFile).enqueue(object : retrofit2.Callback<FrontImageResponse> {
+
+                        override fun onResponse(call: Call<FrontImageResponse>, response: Response<FrontImageResponse>) {
+                            if(response.isSuccessful) {
+
+                                Toast.makeText(this@ImagesGridActivity_3, "File Uploaded Successfully...", Toast.LENGTH_LONG).show();
+                            } else {
+                                Toast.makeText(this@ImagesGridActivity_3, "Some error occurred...", Toast.LENGTH_LONG).show();
+                            }                        }
+
+
+                        override fun onFailure(call: Call<FrontImageResponse>?, t: Throwable?) {
+                            Toast.makeText(this@ImagesGridActivity_3,t.toString(),Toast.LENGTH_SHORT).show()
+                        }
+
+
+
+                    })
+
+
+                    restClient.uploadrightImage(requestFile).enqueue(object : retrofit2.Callback<RightImageResponse>{
+
+                        override fun onResponse(call: Call<RightImageResponse>, response: Response<RightImageResponse>) {
+                            if(response.isSuccessful) {
+
+                                Toast.makeText(this@ImagesGridActivity_3, "File Uploaded Successfully...", Toast.LENGTH_LONG).show();
+                            } else {
+                                Toast.makeText(this@ImagesGridActivity_3, "Some error occurred...", Toast.LENGTH_LONG).show();
+                            }                            }
+
+                        override fun onFailure(call: Call<RightImageResponse>?, t: Throwable?) {
+                            Toast.makeText(this@ImagesGridActivity_3,t.toString(),Toast.LENGTH_SHORT).show()
+                        }
+
+
+                    })
 
 
 
@@ -182,13 +259,7 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
                     mCameraBitmap!!.byteCount;
 
 
-                    // CALL THIS METHOD TO GET THE URI FROM THE BITMAP
-                   //  mCapturedImageURI = getImageUri(applicationContext, mCameraBitmap!!)
 
-                    // CALL THIS METHOD TO GET THE ACTUAL PATH
-                    //val finalFile = File(getRealPathFromURI(mCapturedImageURI!!))
-
-                  //  System.out.println(finalFile)
 
 
                     val saveFile = openFileForImage()

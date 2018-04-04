@@ -1,20 +1,27 @@
 package com.dmitrybrant.RetrofitLibrary;
 
+import com.dmitrybrant.response.BackImageResponse;
+import com.dmitrybrant.response.FrontImageResponse;
 import com.dmitrybrant.response.LeftImageResponse;
+import com.dmitrybrant.response.RightImageResponse;
 import com.dmitrybrant.response.UUIDResponse;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 
-
+import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
+import okhttp3.RequestBody;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Call;
+import retrofit2.Callback;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
+import retrofit2.http.Multipart;
 import retrofit2.http.POST;
+import retrofit2.http.Part;
 
 public class RetrofitLibrary {
 
@@ -63,8 +70,22 @@ public class RetrofitLibrary {
         Call<UUIDResponse> isUUID();
 
 
-        @POST("images/left?uuid=8f1bc972-84cf-4106-b019-f9a1a5a728cf")
-        Call<LeftImageResponse> leftImage();
+        @Multipart
+        @POST("images/back?uuid=8f1bc972-84cf-4106-b019-f9a1a5a728cf")
+        Call<LeftImageResponse> uploadleftImage(@Part("images\"; filename=\"left.png\" ") RequestBody file);
+
+        @Multipart
+        @POST("images/right?uuid=8f1bc972-84cf-4106-b019-f9a1a5a728cf")
+        Call<RightImageResponse> uploadrightImage(@Part("images\"; filename=\"right.png\" ") RequestBody file);
+
+        @Multipart
+        @POST("images/front?uuid=8f1bc972-84cf-4106-b019-f9a1a5a728cf")
+        Call<FrontImageResponse> uploadfrontImage(@Part("images\"; filename=\"front.png\" ") RequestBody file);
+
+
+        @Multipart
+        @POST("images/back?uuid=8f1bc972-84cf-4106-b019-f9a1a5a728cf")
+        Call<BackImageResponse> uploadbackImage(@Part("images\"; filename=\"back.png\" ") RequestBody file);
 
 /*
 
