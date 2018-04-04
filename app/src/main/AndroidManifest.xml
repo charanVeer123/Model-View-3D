@@ -44,6 +44,11 @@
         <activity android:name="com.dmitrybrant.activities.ApiCalling">
 
 
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
 
         </activity>
 
@@ -56,11 +61,6 @@
             android:name="com.dmitrybrant.activities.ImagesGridActivity_3"
             android:screenOrientation="portrait">
 
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
 
         </activity>
 

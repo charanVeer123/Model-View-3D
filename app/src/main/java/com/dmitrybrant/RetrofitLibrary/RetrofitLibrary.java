@@ -1,13 +1,19 @@
 package com.dmitrybrant.RetrofitLibrary;
 
 import com.dmitrybrant.response.BackImageResponse;
+import com.dmitrybrant.response.ConfigGenderHeight;
 import com.dmitrybrant.response.FrontImageResponse;
+import com.dmitrybrant.response.LeftImageConfigRes;
 import com.dmitrybrant.response.LeftImageResponse;
 import com.dmitrybrant.response.RightImageResponse;
 import com.dmitrybrant.response.UUIDResponse;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+
+import org.json.JSONObject;
+
+import java.util.HashMap;
 
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
@@ -65,10 +71,8 @@ public class RetrofitLibrary {
     public interface GitApiInterface {
 
 
-
         @GET("uuid")
         Call<UUIDResponse> isUUID();
-
 
         @Multipart
         @POST("images/back?uuid=8f1bc972-84cf-4106-b019-f9a1a5a728cf")
@@ -87,7 +91,11 @@ public class RetrofitLibrary {
         @POST("images/back?uuid=8f1bc972-84cf-4106-b019-f9a1a5a728cf")
         Call<BackImageResponse> uploadbackImage(@Part("images\"; filename=\"back.png\" ") RequestBody file);
 
+        @POST("configuration/left?uuid=8f1bc972-84cf-4106-b019-f9a1a5a728cf")
+        Call<LeftImageConfigRes> leftImageConfig(@Body JSONObject jsonObject);
 
+        @POST("configuration?uuid=8f1bc972-84cf-4106-b019-f9a1a5a728cf&gender=<gender_str>&height=<mm_int>")
+        Call<ConfigGenderHeight> genderHeight(@Body JSONObject jsonObject);
 
 
 
