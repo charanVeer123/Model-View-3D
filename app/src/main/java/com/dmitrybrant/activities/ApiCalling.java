@@ -8,27 +8,16 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.dmitrybrant.RetrofitLibrary.RetrofitLibrary;
-import com.dmitrybrant.response.LeftImageConfigRes;
+import com.dmitrybrant.response.uploadImagesConfigRes.ConfigGenderHeight;
+import com.dmitrybrant.response.uploadImagesConfigRes.LeftImageConfigRes;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-
-import okhttp3.MediaType;
-import okhttp3.MultipartBody;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
 import retrofit2.Call;
 import retrofit2.Callback;
 
@@ -260,6 +249,53 @@ public class ApiCalling extends Activity{
             });
 
 
+
+            restClient.genderHeight().enqueue(new Callback<ConfigGenderHeight>() {
+                @Override
+                public void onResponse(Call<ConfigGenderHeight> call, retrofit2.Response<ConfigGenderHeight> response) {
+
+
+                    if(response.code()==201){
+
+                        if(response.isSuccessful())
+                            Toast.makeText(ApiCalling.this, "Success", Toast.LENGTH_SHORT).show();
+
+                        Toast.makeText(ApiCalling.this, "OK", Toast.LENGTH_SHORT).show();
+
+                    }
+
+                    else if(response.code()==400){
+                        Toast.makeText(ApiCalling.this, "400 Bad Request (no 'uuid' query or json data could not be read)", Toast.LENGTH_SHORT).show();
+
+                    }
+                    else if(response.code()==404){
+                        Toast.makeText(ApiCalling.this, "404 Not Found", Toast.LENGTH_SHORT).show();
+
+                    }
+                    else if(response.code()==409){
+                        Toast.makeText(ApiCalling.this, "409 Conflict (json data has already loaded)", Toast.LENGTH_SHORT).show();
+
+                    }
+                    else if(response.code()==500){
+                        Toast.makeText(ApiCalling.this, "500 Internal Server Error", Toast.LENGTH_SHORT).show();
+
+                    }
+
+                    else
+                    {
+                        Toast.makeText(ApiCalling.this, "False", Toast.LENGTH_SHORT).show();
+
+                    }
+
+
+                }
+
+                @Override
+                public void onFailure(Call<ConfigGenderHeight> call, Throwable t) {
+                    Toast.makeText(ApiCalling.this, t.getMessage(), Toast.LENGTH_SHORT).show();
+
+                }
+            });
 
 
         }

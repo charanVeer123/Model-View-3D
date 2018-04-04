@@ -21,5 +21,17 @@
 
     <string name="done">Done</string>
     <string name="recapture_image">Retake Picture</string>
+    <string name="capture_criteria">List of Good Input Image Criteria</string>
+
+
+    <string name="first_point">1. Lighting conditions should be normal.</string>
+    <string name="sec_point">2. Other people should be absent in the image.</string>
+    <string name="third_point">3. Mirrors and other reflecting surfaces should be absent in the image.</string>
+    <string name="fourth_point">4. Background behind a person should differ from him/her in color.</string>
+    <string name="fifth_point">5. A person should have a correct posture up to the position of the arms and legs relative to the body.</string>
+    <string name="sixth_point">6. Body should be oriented vertically on the image.</string>
+    <string name="seven_point">7. Body location on the image should satisfy the certain criteria.</string>
+
+
 
 </resources>

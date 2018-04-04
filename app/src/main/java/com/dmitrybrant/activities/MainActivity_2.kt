@@ -11,6 +11,7 @@ import android.view.View
 import android.view.Window
 import android.view.WindowManager
 import android.widget.Toast
+import com.dmitrybrant.dialogs.InstructionDialog
 import com.dmitrybrant.modelviewer.R
 import com.droidbyme.dialoglib.AnimUtils
 import com.droidbyme.dialoglib.DroidDialog
@@ -41,6 +42,10 @@ class MainActivity_2 : AppCompatActivity(), View.OnClickListener {
         this.window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN)
 
         setContentView(R.layout.activity_kotlin_app)
+
+
+        val dialog = InstructionDialog(this@MainActivity_2)
+        dialog.show()
 
 
         txtMyProfile.setOnClickListener(this)

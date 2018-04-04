@@ -7,7 +7,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.hardware.camera2.CameraCharacteristics
-import android.hardware.camera2.CameraManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -24,14 +23,15 @@ import com.dmitrybrant.RetrofitLibrary.RetrofitLibrary
 import com.dmitrybrant.models.ImagesModel
 import com.dmitrybrant.modelviewer.MainActivityPlyParser
 import com.dmitrybrant.modelviewer.R
-import com.dmitrybrant.response.*
+import com.dmitrybrant.response.uploadImagesServerRes.BackImageResponse
+import com.dmitrybrant.response.uploadImagesServerRes.FrontImageResponse
+import com.dmitrybrant.response.uploadImagesServerRes.LeftImageResponse
+import com.dmitrybrant.response.uploadImagesServerRes.RightImageResponse
 import dmax.dialog.SpotsDialog
 import kotlinx.android.synthetic.main.activity_captured_images.*
 import kotlinx.android.synthetic.main.grid_item_layout.view.*
-import okhttp3.Callback
 import okhttp3.MediaType
 import okhttp3.RequestBody
-import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Response
 import java.io.ByteArrayOutputStream
@@ -40,7 +40,6 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.collections.HashMap
 
 /**
  * Created by dharamveer on 28/3/18.

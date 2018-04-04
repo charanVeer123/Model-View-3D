@@ -1,26 +1,25 @@
 package com.dmitrybrant.RetrofitLibrary;
 
-import com.dmitrybrant.response.BackImageResponse;
-import com.dmitrybrant.response.ConfigGenderHeight;
-import com.dmitrybrant.response.FrontImageResponse;
-import com.dmitrybrant.response.LeftImageConfigRes;
-import com.dmitrybrant.response.LeftImageResponse;
-import com.dmitrybrant.response.RightImageResponse;
-import com.dmitrybrant.response.UUIDResponse;
+import com.dmitrybrant.response.uploadImagesConfigRes.BackImageConfigRes;
+import com.dmitrybrant.response.uploadImagesConfigRes.FrontImageConfigRes;
+import com.dmitrybrant.response.uploadImagesConfigRes.RightImageConfigRes;
+import com.dmitrybrant.response.uploadImagesServerRes.BackImageResponse;
+import com.dmitrybrant.response.uploadImagesConfigRes.ConfigGenderHeight;
+import com.dmitrybrant.response.uploadImagesServerRes.FrontImageResponse;
+import com.dmitrybrant.response.uploadImagesConfigRes.LeftImageConfigRes;
+import com.dmitrybrant.response.uploadImagesServerRes.LeftImageResponse;
+import com.dmitrybrant.response.uploadImagesServerRes.RightImageResponse;
+import com.dmitrybrant.response.sessionResponse.CreateSessionRes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 
 import org.json.JSONObject;
 
-import java.util.HashMap;
-
-import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.RequestBody;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Call;
-import retrofit2.Callback;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.Body;
@@ -66,15 +65,18 @@ public class RetrofitLibrary {
         return gitApiInterface;
 
 
-        
+
     }
 
     public interface GitApiInterface {
 
 
+        //Create Session Api
         @GET("uuid")
-        Call<UUIDResponse> isUUID();
+        Call<CreateSessionRes> isUUID();
 
+
+        //Send images to server api's
         @Multipart
         @POST("images/back?uuid=8f1bc972-84cf-4106-b019-f9a1a5a728cf")
         Call<LeftImageResponse> uploadleftImage(@Part("images\"; filename=\"left.png\" ") RequestBody file);
@@ -87,16 +89,36 @@ public class RetrofitLibrary {
         @POST("images/front?uuid=8f1bc972-84cf-4106-b019-f9a1a5a728cf")
         Call<FrontImageResponse> uploadfrontImage(@Part("images\"; filename=\"front.png\" ") RequestBody file);
 
-
         @Multipart
         @POST("images/back?uuid=8f1bc972-84cf-4106-b019-f9a1a5a728cf")
         Call<BackImageResponse> uploadbackImage(@Part("images\"; filename=\"back.png\" ") RequestBody file);
 
+
+
+
+
+        //Configuration Api's
         @POST("configuration/left?uuid=8f1bc972-84cf-4106-b019-f9a1a5a728cf")
         Call<LeftImageConfigRes> leftImageConfig(@Body JSONObject jsonObject);
 
-        @POST("configuration?uuid=8f1bc972-84cf-4106-b019-f9a1a5a728cf&gender=<gender_str>&height=<mm_int>")
-        Call<ConfigGenderHeight> genderHeight(@Body JSONObject jsonObject);
+
+        //Configuration Api's
+        @POST("configuration/right?uuid=8f1bc972-84cf-4106-b019-f9a1a5a728cf")
+        Call<RightImageConfigRes> rightImageConfig(@Body JSONObject jsonObject);
+
+        //Configuration Api's
+        @POST("configuration/front?uuid=8f1bc972-84cf-4106-b019-f9a1a5a728cf")
+        Call<FrontImageConfigRes> frontImageConfig(@Body JSONObject jsonObject);
+
+        //Configuration Api's
+        @POST("configuration/back?uuid=8f1bc972-84cf-4106-b019-f9a1a5a728cf")
+        Call<BackImageConfigRes> backImageConfig(@Body JSONObject jsonObject);
+
+
+
+       // https://a3dyou.com:9000/configuration?uuid=8f1bc972-84cf-4106-b019-f9a1a5a728cf&gender=male&height=200
+        @POST("configuration?uuid=8f1bc972-84cf-4106-b019-f9a1a5a728cf&gender=female&height=400")
+        Call<ConfigGenderHeight> genderHeight();
 
 
 
