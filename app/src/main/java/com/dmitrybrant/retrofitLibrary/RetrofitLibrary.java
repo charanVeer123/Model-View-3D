@@ -1,5 +1,6 @@
-package com.dmitrybrant.RetrofitLibrary;
+package com.dmitrybrant.retrofitLibrary;
 
+import com.dmitrybrant.Utility;
 import com.dmitrybrant.response.sessionResponse.DeleteSessionRes;
 import com.dmitrybrant.response.uploadImagesConfigRes.BackImageConfigRes;
 import com.dmitrybrant.response.uploadImagesConfigRes.FrontImageConfigRes;
@@ -11,13 +12,13 @@ import com.dmitrybrant.response.uploadImagesConfigRes.LeftImageConfigRes;
 import com.dmitrybrant.response.uploadImagesServerRes.LeftImageResponse;
 import com.dmitrybrant.response.uploadImagesServerRes.RightImageResponse;
 import com.dmitrybrant.response.sessionResponse.CreateSessionRes;
+import com.dmitrybrant.sharedPreferecnes.SharedPreferencesClass;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 
 import org.json.JSONObject;
 
-import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.RequestBody;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -25,9 +26,9 @@ import retrofit2.Call;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.Multipart;
-import retrofit2.http.PATCH;
 import retrofit2.http.POST;
 import retrofit2.http.Part;
 
@@ -39,9 +40,15 @@ public class RetrofitLibrary {
     // http://employeelive.com/kwiqmall/API/public/getRestaurants
 
     private static String baseUrl = "https://a3dyou.com:9000/";
+    private static String session_key;
+
+
+
 
     public static GitApiInterface getClient() {
 
+
+//        session_key = SharedPreferencesClass.getSession_key();
 
         HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
         logging.setLevel(HttpLoggingInterceptor.Level.BODY);
@@ -63,6 +70,7 @@ public class RetrofitLibrary {
                 .build();
 
 
+
         gitApiInterface = retrofit.create(GitApiInterface.class);
 
         return gitApiInterface;
@@ -80,54 +88,55 @@ public class RetrofitLibrary {
 
 
 
+
         //Send images to server api's
         @Multipart
-        @POST("images/back?uuid=c604464b-12ab-4654-9438-50e2787a1e58")
+        @POST("images/back?uuid={session_key}")
         Call<LeftImageResponse> uploadleftImage(@Part("image\"; filename=\"pp.png\" ") RequestBody file);
 
         //Call<LeftImageResponse> uploadleftImage(@Part MultipartBody.Part filePart);
 
 
         @Multipart
-        @POST("images/right?uuid=c604464b-12ab-4654-9438-50e2787a1e58")
+        @POST("images/right?uuid={session_key}")
         Call<RightImageResponse> uploadrightImage(@Part("image\"; filename=\"pp.png\" ") RequestBody file);
 
         @Multipart
-        @POST("images/front?uuid=c604464b-12ab-4654-9438-50e2787a1e58")
+        @POST("images/front?uuid={session_key}")
         Call<FrontImageResponse> uploadfrontImage(@Part("image\"; filename=\"pp.png\" ") RequestBody file);
 
         @Multipart
-        @POST("images/back?uuid=c604464b-12ab-4654-9438-50e2787a1e58")
+        @POST("images/back?uuid={session_key}")
         Call<BackImageResponse> uploadbackImage(@Part("image\"; filename=\"pp.png\" ") RequestBody file);
 
 
 
         //Configuration Api's
-        @POST("configuration/left?uuid=c604464b-12ab-4654-9438-50e2787a1e58")
+        @POST("configuration/left?uuid={session_key}")
         Call<LeftImageConfigRes> leftImageConfig(@Body JSONObject jsonObject);
 
 
         //Configuration Api's
-        @POST("configuration/right?uuid=c604464b-12ab-4654-9438-50e2787a1e58")
+        @POST("configuration/right?uuid={session_key}")
         Call<RightImageConfigRes> rightImageConfig(@Body JSONObject jsonObject);
 
         //Configuration Api's
-        @POST("configuration/front?uuid=c604464b-12ab-4654-9438-50e2787a1e58")
+        @POST("configuration/front?uuid={session_key}")
         Call<FrontImageConfigRes> frontImageConfig(@Body JSONObject jsonObject);
 
         //Configuration Api's
-        @POST("configuration/back?uuid=c604464b-12ab-4654-9438-50e2787a1e58")
+        @POST("configuration/back?uuid={session_key}")
         Call<BackImageConfigRes> backImageConfig(@Body JSONObject jsonObject);
 
 
 
-       // https://a3dyou.com:9000/configuration?uuid=c604464b-12ab-4654-9438-50e2787a1e58&gender=male&height=200
-        @POST("configuration?uuid=c604464b-12ab-4654-9438-50e2787a1e58&gender=female&height=400")
+       // https://a3dyou.com:9000/configuration?uuid=session_key&gender=male&height=200
+        @POST("configuration?uuid={session_key}&gender=female&height=400")
         Call<ConfigGenderHeight> genderHeight();
 
 
         //Delete session api
-        @GET("uuid?uuid=176a0b9a-faa1-405a-b20a-272b68e7641d")
+        @DELETE("uuid?uuid={session_key}")
         Call<DeleteSessionRes> deleteSession();
 
 

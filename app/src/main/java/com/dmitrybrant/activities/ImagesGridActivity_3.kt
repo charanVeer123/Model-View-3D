@@ -22,7 +22,7 @@ import android.widget.BaseAdapter
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
-import com.dmitrybrant.RetrofitLibrary.RetrofitLibrary
+import com.dmitrybrant.retrofitLibrary.RetrofitLibrary
 import com.dmitrybrant.models.ImagesModel
 import com.dmitrybrant.modelviewer.MainActivityPlyParser
 import com.dmitrybrant.modelviewer.R
@@ -159,6 +159,11 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
         // startActivityForResult(new Intent(MediaStore.ACTION_IMAGE_CAPTURE), TAKE_PICTURE_REQUEST_B);
         startActivityForResult(Intent(this@ImagesGridActivity_3, CameraActivity::class.java),requestCode)
 
+
+       /* val intent = Intent(this@ImagesGridActivity_3, AndroidSurfaceviewExample::class.java)
+
+        startActivity(intent)
+*/
     }
 
     @Throws(IOException::class)

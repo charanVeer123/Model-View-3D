@@ -9,14 +9,17 @@ import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
 import dmax.dialog.SpotsDialog
 import android.Manifest
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import com.dmitrybrant.modelviewer.R
 import kotlinx.android.synthetic.main.activity_login_main.*
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.widget.Toast
-import com.dmitrybrant.RetrofitLibrary.RetrofitLibrary
+import com.dmitrybrant.Utility
+import com.dmitrybrant.retrofitLibrary.RetrofitLibrary
 import com.dmitrybrant.response.sessionResponse.CreateSessionRes
+import com.dmitrybrant.sharedPreferecnes.SharedPreferencesClass
 import retrofit2.Call
 import retrofit2.Response
 
@@ -30,6 +33,8 @@ class LoginActivity_1 : AppCompatActivity() {
     var isCheckedRadio: Boolean = true
     val CAMERA_PERMISSION_REQUEST_CODE = 3
     val restClient = RetrofitLibrary.getClient()
+
+    //internal lateinit var utility: Utility
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,44 +50,8 @@ class LoginActivity_1 : AppCompatActivity() {
         setContentView(R.layout.activity_login_main)
 
 
+      //  Utility.createSession1()
 
-        restClient.createSession().enqueue(object : retrofit2.Callback<CreateSessionRes>{
-
-
-            override fun onResponse(call: Call<CreateSessionRes>, response: Response<CreateSessionRes>) {
-
-                if(response.code()==201){
-
-                    Toast.makeText(applicationContext,"OK (_uuid_ is response body)",Toast.LENGTH_SHORT).show()
-
-
-                    if(response.isSuccessful){
-
-                        response.body().toString()
-                    }
-                    else
-                    {
-
-
-                    }
-                }
-                else if(response.code()==500){
-                    Toast.makeText(applicationContext,"Internal Server Error",Toast.LENGTH_SHORT).show()
-
-                }
-                else if(response.code()==503){
-                    Toast.makeText(applicationContext,"Service Unavailable (if any session has already created and used)",Toast.LENGTH_SHORT).show()
-
-                }
-
-            }
-
-            override fun onFailure(call: Call<CreateSessionRes>?, t: Throwable?) {
-
-                Toast.makeText(applicationContext,t.toString(),Toast.LENGTH_SHORT).show()
-
-            }
-        })
 
 
         edPassword.setOnEditorActionListener({ textView, i, keyEvent ->
@@ -124,6 +93,13 @@ class LoginActivity_1 : AppCompatActivity() {
             }
         }
 
+
+
+    }
+
+
+    override fun onDestroy() {
+        super.onDestroy()
 
 
     }

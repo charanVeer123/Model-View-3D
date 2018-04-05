@@ -201,12 +201,9 @@ class CameraActivity : Activity(), Camera.PictureCallback, SurfaceHolder.Callbac
         }
     }
 
-
-
     override fun onPictureTaken(data: ByteArray, camera: Camera) {
         mCameraData = data
 
-        setupImageDisplay()
         setupImageDisplay()
 
     }
@@ -254,13 +251,13 @@ class CameraActivity : Activity(), Camera.PictureCallback, SurfaceHolder.Callbac
         dialog.dismiss()
         done_button.performClick()
 
-/*
+
         mCameraImage!!.setImageBitmap(RotateBitmap(bitmap, 90f))
         mCamera!!.stopPreview()
         mCameraPreview!!.visibility = View.INVISIBLE
         mCameraImage!!.visibility = View.VISIBLE
         mCaptureImageButton!!.setText(R.string.recapture_image)
-        mCaptureImageButton!!.setOnClickListener(mRecaptureImageButtonClickListener)*/
+        mCaptureImageButton!!.setOnClickListener(mRecaptureImageButtonClickListener)
     }
 
 

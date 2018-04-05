@@ -11,7 +11,8 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.widget.Toast;
 
-import com.dmitrybrant.RetrofitLibrary.RetrofitLibrary;
+import com.dmitrybrant.Utility;
+import com.dmitrybrant.retrofitLibrary.RetrofitLibrary;
 import com.dmitrybrant.response.uploadImagesConfigRes.ConfigGenderHeight;
 import com.dmitrybrant.response.uploadImagesConfigRes.LeftImageConfigRes;
 
@@ -29,13 +30,14 @@ public class ApiCalling extends Activity{
     private Sensor mSensorY;
     private Sensor mSensorZ;
 
-
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
 
         final RetrofitLibrary.GitApiInterface restClient = RetrofitLibrary.getClient();
+
+
 
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
