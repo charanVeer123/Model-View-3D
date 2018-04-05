@@ -36,18 +36,16 @@
         <activity
             android:name="com.dmitrybrant.activities.LoginActivity_1"
             android:screenOrientation="portrait">
-
-
-
-        </activity>
-
-        <activity android:name="com.dmitrybrant.activities.ApiCalling">
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+
+        <activity android:name="com.dmitrybrant.activities.ApiCalling">
+
+
 
         </activity>
 
@@ -67,7 +65,11 @@
 
         <activity
             android:name="com.dmitrybrant.activities.CameraActivity"
-            android:screenOrientation="portrait"></activity>
+            android:screenOrientation="portrait">
+
+
+
+        </activity>
 
 
         <provider
@@ -124,6 +126,15 @@
                 <data android:mimeType="application/x-stl"/>
                 <data android:mimeType="application/octet-stream" android:scheme="content"/>
             </intent-filter>-->
+        </activity>
+
+
+        <activity android:name="com.dmitrybrant.activities.PreviewActivity">
+
+
+
+
+
         </activity>
 
         <activity

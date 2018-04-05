@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.Toast;
 
 import com.dmitrybrant.activities.ImagesGridActivity_3;
 import com.dmitrybrant.modelviewer.R;
@@ -44,9 +45,15 @@ public class InstructionDialog extends Dialog{
             @Override
             public void onClick(View v) {
 
+                if(checkboxAccept.isChecked()) {
 
-                getContext().startActivity(new Intent(getContext(),ImagesGridActivity_3.class));
-                dismiss();
+                    getContext().startActivity(new Intent(getContext(), ImagesGridActivity_3.class));
+                    dismiss();
+
+                }
+                else {
+                    Toast.makeText(getContext(), "Accept criteria", Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }

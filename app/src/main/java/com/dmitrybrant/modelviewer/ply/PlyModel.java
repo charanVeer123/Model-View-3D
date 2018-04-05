@@ -1,5 +1,6 @@
 package com.dmitrybrant.modelviewer.ply;
 
+import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.support.annotation.NonNull;
@@ -18,6 +19,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
+
+import dmax.dialog.SpotsDialog;
 
 import static com.dmitrybrant.modelviewer.util.Util.readIntLe;
 
@@ -44,13 +47,18 @@ public class PlyModel extends IndexedModel {
 
     private final float[] pointColor = new float[] { 1.0f, 1.0f, 1.0f };
 
-    public PlyModel(@NonNull InputStream inputStream) throws IOException {
+    //Context context;
+    //SpotsDialog dialog;
+    public PlyModel(Context context,@NonNull InputStream inputStream) throws IOException {
         super();
         BufferedInputStream stream = new BufferedInputStream(inputStream, INPUT_BUFFER_SIZE);
         readText(stream);
         if (vertexCount <= 0 || vertexBuffer == null) {
             throw new IOException("Invalid model.");
         }
+
+      //  this.context = context;
+
     }
 
     @Override
@@ -62,6 +70,9 @@ public class PlyModel extends IndexedModel {
         glProgram = Util.compileProgram(R.raw.point_cloud_vertex, R.raw.single_color_fragment,
                 new String[] {"a_Position"});
         initModelMatrix(boundSize);
+       // dialog = new SpotsDialog(context, R.style.CustomProgressDialog);
+
+       // dialog.show();
     }
 
     @Override
@@ -214,5 +225,6 @@ public class PlyModel extends IndexedModel {
         GLES20.glDrawArrays(GLES20.GL_POINTS, 0, vertexCount);
 
         GLES20.glDisableVertexAttribArray(positionHandle);
+        //dialog.dismiss();
     }
 }

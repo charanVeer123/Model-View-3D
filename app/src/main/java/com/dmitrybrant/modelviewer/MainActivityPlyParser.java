@@ -196,16 +196,16 @@ public class MainActivityPlyParser extends AppCompatActivity {
                     if (!TextUtils.isEmpty(fileName)) {
 
                         if (fileName.toLowerCase().endsWith(".ply")) {
-                            model = new PlyModel(stream);
+                            model = new PlyModel(MainActivityPlyParser.this,stream);
                         } else {
                             // assume it's STL.
-                            model = new PlyModel(stream);
+                            model = new PlyModel(MainActivityPlyParser.this,stream);
                         }
                         model.setTitle(fileName);
                     } else {
                         // assume it's STL.
                         // TODO: autodetect file type by reading contents?
-                        model = new PlyModel(stream);
+                        model = new PlyModel(MainActivityPlyParser.this,stream);
                     }
                     return model;
                 }
@@ -271,7 +271,8 @@ public class MainActivityPlyParser extends AppCompatActivity {
             //InputStream stream = getApplicationContext().getAssets().open(SAMPLE_MODELS[sampleModelIndex++ % SAMPLE_MODELS.length]);
             InputStream stream = getApplicationContext().getAssets().open("girl.ply");
 
-            setCurrentModel(new PlyModel(stream));
+            setCurrentModel(new PlyModel(MainActivityPlyParser.this,stream));
+
             stream.close();
 
         } catch (IOException e) {

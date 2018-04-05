@@ -1,35 +1,25 @@
 package com.dmitrybrant.activities
 
+
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
-import android.hardware.Camera
-import android.hardware.Sensor
-import android.hardware.SensorEvent
-import android.hardware.SensorEventListener
-import android.hardware.SensorManager
+import android.hardware.*
 import android.os.Bundle
 import android.os.Environment
-import android.view.SurfaceHolder
-import android.view.SurfaceView
-import android.view.View
-import android.view.Window
-import android.view.WindowManager
+import android.view.*
 import android.widget.Button
 import android.widget.ImageView
-import android.widget.TextView
 import android.widget.Toast
-
-
 import com.dmitrybrant.modelviewer.R
-
+import dmax.dialog.SpotsDialog
+import kotlinx.android.synthetic.main.activity_camera.*
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-import java.io.ObjectOutputStream
 
 /**
  * Created by dharamveer on 20/3/18.
@@ -47,19 +37,18 @@ class CameraActivity : Activity(), Camera.PictureCallback, SurfaceHolder.Callbac
     private var globalLight: Double = 0.toDouble()
 
     private val mCaptureImageButtonClickListener = View.OnClickListener {
-        if (globalLight > 5) {
 
-            captureImage()
 
-        } else {
+        captureImage()
 
-            Toast.makeText(this@CameraActivity, "Not enough light", Toast.LENGTH_LONG).show()
-        }
     }
 
     private val mRecaptureImageButtonClickListener = View.OnClickListener { setupImageCapture() }
 
     private val mDoneButtonClickListener = View.OnClickListener {
+
+
+
         if (mCameraData != null) {
             val intent = Intent()
             intent.putExtra(EXTRA_CAMERA_DATA, mCameraData)
@@ -218,6 +207,7 @@ class CameraActivity : Activity(), Camera.PictureCallback, SurfaceHolder.Callbac
         mCameraData = data
 
         setupImageDisplay()
+        setupImageDisplay()
 
     }
 
@@ -240,7 +230,9 @@ class CameraActivity : Activity(), Camera.PictureCallback, SurfaceHolder.Callbac
     override fun surfaceDestroyed(holder: SurfaceHolder) {}
 
     private fun captureImage() {
+
         mCamera!!.takePicture(null, null, this)
+
     }
 
     private fun setupImageCapture() {
@@ -252,17 +244,26 @@ class CameraActivity : Activity(), Camera.PictureCallback, SurfaceHolder.Callbac
     }
 
     private fun setupImageDisplay() {
+
         val bitmap = BitmapFactory.decodeByteArray(mCameraData, 0, mCameraData!!.size)
 
-        createDirectoryAndSaveFile(bitmap,"a3dyou");
+        val dialog = SpotsDialog(this,R.style.CustomProgressDialog)
+        dialog.show()
 
+        createDirectoryAndSaveFile(bitmap,"a3dyou");
+        dialog.dismiss()
+        done_button.performClick()
+
+/*
         mCameraImage!!.setImageBitmap(RotateBitmap(bitmap, 90f))
         mCamera!!.stopPreview()
         mCameraPreview!!.visibility = View.INVISIBLE
         mCameraImage!!.visibility = View.VISIBLE
         mCaptureImageButton!!.setText(R.string.recapture_image)
-        mCaptureImageButton!!.setOnClickListener(mRecaptureImageButtonClickListener)
+        mCaptureImageButton!!.setOnClickListener(mRecaptureImageButtonClickListener)*/
     }
+
+
 
     companion object {
 

@@ -6,7 +6,10 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
+import android.hardware.Sensor
+import android.hardware.SensorManager
 import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -23,6 +26,10 @@ import com.dmitrybrant.RetrofitLibrary.RetrofitLibrary
 import com.dmitrybrant.models.ImagesModel
 import com.dmitrybrant.modelviewer.MainActivityPlyParser
 import com.dmitrybrant.modelviewer.R
+import com.dmitrybrant.response.uploadImagesConfigRes.BackImageConfigRes
+import com.dmitrybrant.response.uploadImagesConfigRes.FrontImageConfigRes
+import com.dmitrybrant.response.uploadImagesConfigRes.LeftImageConfigRes
+import com.dmitrybrant.response.uploadImagesConfigRes.RightImageConfigRes
 import com.dmitrybrant.response.uploadImagesServerRes.BackImageResponse
 import com.dmitrybrant.response.uploadImagesServerRes.FrontImageResponse
 import com.dmitrybrant.response.uploadImagesServerRes.LeftImageResponse
@@ -32,6 +39,8 @@ import kotlinx.android.synthetic.main.activity_captured_images.*
 import kotlinx.android.synthetic.main.grid_item_layout.view.*
 import okhttp3.MediaType
 import okhttp3.RequestBody
+import org.json.JSONException
+import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Response
 import java.io.ByteArrayOutputStream
@@ -70,7 +79,6 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
     private var mCameraBitmap: Bitmap? = null
     private var txtCreate: TextView? = null
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -85,7 +93,7 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
         txtCreate = findViewById(R.id.txtCreate) as TextView
 
 
-        val dialog = SpotsDialog(this,R.style.CustomProgressDialog)
+       val dialog = SpotsDialog(this,R.style.CustomProgressDialog)
 
         txtCreate!!.setOnClickListener{
 
@@ -188,7 +196,7 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
                 if (cameraData != null) {
                     mCameraBitmap = BitmapFactory.decodeByteArray(cameraData, 0, cameraData.size)
 
-                   // val photo: Bitmap// this is your image.
+                    // val photo: Bitmap// this is your image.
                     val stream = ByteArrayOutputStream()
                     mCameraBitmap!!.compress(Bitmap.CompressFormat.PNG, 100, stream)
 
@@ -197,13 +205,18 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
                     //creating request body for file
 
                     // CALL THIS METHOD TO GET THE URI FROM THE BITMAP
-                      mCapturedImageURI = getImageUri(applicationContext, mCameraBitmap!!)
+                    mCapturedImageURI = getImageUri(applicationContext, mCameraBitmap!!)
 
                     // CALL THIS METHOD TO GET THE ACTUAL PATH
                     val finalFile = File(getRealPathFromURI(mCapturedImageURI!!))
 
 
-                    val requestFile = RequestBody.create(MediaType.parse(contentResolver.getType(mCapturedImageURI)!!), finalFile)
+                   // val requestFile = RequestBody.create(MediaType.parse(contentResolver.getType(mCapturedImageURI)!!), finalFile)
+                   // val requestFile = RequestBody.create(MediaType.parse(contentResolver.getType(mCapturedImageURI)!!), finalFile)
+                    val requestFile = RequestBody.create(MediaType.parse("image/*"), finalFile)
+
+
+                    //java.io.EOFException: End of input at line 1 column 1
 
                     //Api for left image
                     restClient.uploadleftImage(requestFile).enqueue(object : retrofit2.Callback<LeftImageResponse> {
@@ -245,22 +258,13 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
                         }
                     })
 
+                    getJsonObjectleftImage()
 
 
                     imageViewGl!!.setImageBitmap(RotateBitmap(mCameraBitmap!!,90f))
 
 
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-
-                        CameraCharacteristics.LENS_INTRINSIC_CALIBRATION
-                        CameraCharacteristics.LENS_RADIAL_DISTORTION
-                        CameraCharacteristics.LENS_POSE_ROTATION
-
-                    }
                     mCameraBitmap!!.byteCount;
-
-
-
 
 
                     val saveFile = openFileForImage()
@@ -317,9 +321,10 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
                     val finalFile = File(getRealPathFromURI(mCapturedImageURI!!))
 
 
-                    val requestFile = RequestBody.create(MediaType.parse(contentResolver.getType(mCapturedImageURI)!!), finalFile)
+                    //val requestFile = RequestBody.create(MediaType.parse(contentResolver.getType(mCapturedImageURI)!!), finalFile)
 
 
+                    val requestFile = RequestBody.create(MediaType.parse("image/*"), finalFile)
 
 
                     //Api for right image
@@ -363,16 +368,11 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
                     })
 
+                    getJsonObjectrightImage()
+
                     imageViewGl!!.setImageBitmap(RotateBitmap(mCameraBitmap!!,90f))
 
 
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-
-                        CameraCharacteristics.LENS_INTRINSIC_CALIBRATION
-                        CameraCharacteristics.LENS_RADIAL_DISTORTION
-                        CameraCharacteristics.LENS_POSE_ROTATION
-
-                    }
                     mCameraBitmap!!.byteCount;
 
 
@@ -433,7 +433,8 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
                     val finalFile = File(getRealPathFromURI(mCapturedImageURI!!))
 
 
-                    val requestFile = RequestBody.create(MediaType.parse(contentResolver.getType(mCapturedImageURI)!!), finalFile)
+                    //val requestFile = RequestBody.create(MediaType.parse(contentResolver.getType(mCapturedImageURI)!!), finalFile)
+                    val requestFile = RequestBody.create(MediaType.parse("image/*"), finalFile)
 
 
                     //Api for front image
@@ -481,20 +482,8 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
                     })
 
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 
-                        CameraCharacteristics.LENS_INTRINSIC_CALIBRATION
-                        CameraCharacteristics.LENS_RADIAL_DISTORTION
-                        CameraCharacteristics.LENS_POSE_ROTATION
-
-
-                        val lensRadialDistortion = CameraCharacteristics.LENS_INTRINSIC_CALIBRATION
-
-
-                    }
-
-
-
+                    getJsonObjectFront()
 
 
                     imageViewGl!!.setImageBitmap(RotateBitmap(mCameraBitmap!!,90f))
@@ -566,7 +555,8 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
                     val finalFile = File(getRealPathFromURI(mCapturedImageURI!!))
 
 
-                    val requestFile = RequestBody.create(MediaType.parse(contentResolver.getType(mCapturedImageURI)!!), finalFile)
+                   // val requestFile = RequestBody.create(MediaType.parse(contentResolver.getType(mCapturedImageURI)!!), finalFile)
+                    val requestFile = RequestBody.create(MediaType.parse("image/*"), finalFile)
 
 
                     //Api for back image
@@ -609,16 +599,13 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
                     })
 
+
+                    getJsonObjectbackImage()
+
                     imageViewGl!!.setImageBitmap(RotateBitmap(mCameraBitmap!!,90f))
 
 
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 
-                        CameraCharacteristics.LENS_INTRINSIC_CALIBRATION
-                        CameraCharacteristics.LENS_RADIAL_DISTORTION
-                        CameraCharacteristics.LENS_POSE_ROTATION
-
-                    }
                     mCameraBitmap!!.byteCount;
 
 
@@ -649,6 +636,1097 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
     }
 
 
+
+    private var mSensorManager: SensorManager? = null
+    private var mSensorX: Sensor? = null
+    private var mSensorY: Sensor? = null
+    private var mSensorZ: Sensor? = null
+
+
+    private fun getJsonObjectFront() {
+
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+
+
+            /*Start-------------------Points Object-----------------------------Starts*/
+
+            val jsonObjectTop = JSONObject()
+            try {
+                jsonObjectTop.put("x", 2.5)
+                jsonObjectTop.put("y", 2.5)
+
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+
+
+            val jsonObjectBottom = JSONObject()
+            try {
+                jsonObjectBottom.put("x", 2.5)
+                jsonObjectBottom.put("y", 2.5)
+
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+
+
+            val jsonObjectPoints = JSONObject()
+            try {
+                jsonObjectPoints.put("top", jsonObjectTop)
+                jsonObjectPoints.put("bottom", jsonObjectBottom)
+
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+
+
+            /*End-------------------Points Object-----------------------------End*/
+
+            /**********************************/
+
+
+            /*Start-------------------intrinsics Object-----------------------------Starts*/
+            //Intrinsics Object
+
+            //val lensIntrinsicCalibration = CameraCharacteristics.LENS_INTRINSIC_CALIBRATION
+
+            val manager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
+            var chars: CameraCharacteristics? = null
+
+            try {
+                assert(manager != null)
+                for (cameraId in manager.cameraIdList) {
+                    chars = manager.getCameraCharacteristics(cameraId)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+
+            assert(chars != null)
+            val facing = chars!!.get(CameraCharacteristics.LENS_INTRINSIC_CALIBRATION)
+
+            val jsonObjectK = JSONObject()
+
+            if (facing == null) {
+
+                try {
+                    jsonObjectK.put("fx", null)
+                    jsonObjectK.put("fy", null)
+                    jsonObjectK.put("cx", null)
+                    jsonObjectK.put("cy", null)
+                    jsonObjectK.put("skew", null)
+
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                }
+
+            } else {
+
+                try {
+                    jsonObjectK.put("fx", 2.5)
+                    jsonObjectK.put("fy", 2.5)
+                    jsonObjectK.put("cx", 2.5)
+                    jsonObjectK.put("cy", 2.5)
+                    jsonObjectK.put("skew", 2.5)
+
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                }
+
+            }
+
+
+
+
+            var distortion: FloatArray? = FloatArray(4)
+
+            val managerDistor = getSystemService(Context.CAMERA_SERVICE) as CameraManager
+            var charsDistor: CameraCharacteristics? = null
+
+            try {
+                assert(managerDistor != null)
+                for (cameraId in managerDistor.cameraIdList) {
+                    charsDistor = managerDistor.getCameraCharacteristics(cameraId)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+            assert(charsDistor != null)
+
+
+            distortion = charsDistor!!.get(CameraCharacteristics.LENS_RADIAL_DISTORTION)
+
+            val jsonObjectDistortion = JSONObject()
+
+            if (distortion == null) {
+
+                try {
+                    jsonObjectDistortion.put("k1", null)
+                    jsonObjectDistortion.put("k2", null)
+                    jsonObjectDistortion.put("k3", null)
+                    jsonObjectDistortion.put("k4", null)
+                    jsonObjectDistortion.put("p1", null)
+                    jsonObjectDistortion.put("p2", null)
+
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                }
+
+
+            } else {
+
+                try {
+                    jsonObjectDistortion.put("k1", null)
+                    jsonObjectDistortion.put("k2", null)
+                    jsonObjectDistortion.put("k3", null)
+                    jsonObjectDistortion.put("k4", null)
+                    jsonObjectDistortion.put("p1", null)
+                    jsonObjectDistortion.put("p2", null)
+
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                }
+
+
+            }
+
+            val jsonObjectIntrinsics = JSONObject()
+
+            try {
+                jsonObjectIntrinsics.put("K", jsonObjectK)
+                jsonObjectIntrinsics.put("distortion", jsonObjectDistortion)
+
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+
+
+            /*End-------------------intrinsics Object-----------------------------End*/
+
+
+            /**********************************/
+
+            /*Start-------------------extrinsics Object-----------------------------Starts*/
+
+
+            // 1. [Using the Rotation Vector Sensor]
+            // (https://developer.android.com/guide/topics/sensors/sensors_motion.html#sensors-motion-rotate)
+            //X values
+            mSensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+            mSensorX = mSensorManager!!.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
+
+
+            //[Using the Game Rotation Vector Sensor]
+            // (https://developer.android.com/guide/topics/sensors/sensors_position.html#sensors-pos-gamerot)
+            //y values
+            mSensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+            mSensorY = mSensorManager!!.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR)
+
+
+            //[Using the Geomagnetic Rotation Vector Sensor]
+            // (https://developer.android.com/guide/topics/sensors/sensors_position.html#sensors-pos-geomrot)
+            //z values
+            mSensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+            mSensorZ = mSensorManager!!.getDefaultSensor(Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR)
+
+            //Extrinsics Object
+            val jsonObjectRotationVec = JSONObject()
+
+            if(mSensorX==null && mSensorY==null && mSensorZ==null){
+
+                try {
+                    jsonObjectRotationVec.put("x", null)
+                    jsonObjectRotationVec.put("y", null)
+                    jsonObjectRotationVec.put("z", null)
+
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                }
+
+
+            }
+            else {
+                try {
+                    jsonObjectRotationVec.put("x", mSensorX)
+                    jsonObjectRotationVec.put("y", mSensorY)
+                    jsonObjectRotationVec.put("z", mSensorZ)
+
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                }
+
+            }
+
+
+
+
+            val jsonObjectExtrinsics = JSONObject()
+
+            try {
+                jsonObjectExtrinsics.put("rotation vector component", jsonObjectRotationVec)
+
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+
+
+            /*End-------------------extrinsics Object-----------------------------End*/
+
+
+            /**********************************/
+
+
+            val jsonObjectRoot = JSONObject()
+
+            try {
+                jsonObjectRoot.put("points", jsonObjectPoints)
+                jsonObjectRoot.put("intrinsics", jsonObjectIntrinsics)
+                jsonObjectRoot.put("extrinsics", jsonObjectExtrinsics)
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+
+
+
+
+            restClient.frontImageConfig(jsonObjectRoot).enqueue(object : retrofit2.Callback<FrontImageConfigRes>{
+                override fun onResponse(call: Call<FrontImageConfigRes>, response: Response<FrontImageConfigRes>) {
+
+                    if (response.code() == 201) {
+
+                        if (response.isSuccessful())
+                            Toast.makeText(this@ImagesGridActivity_3, "Success", Toast.LENGTH_SHORT).show()
+
+                        Toast.makeText(this@ImagesGridActivity_3, "OK", Toast.LENGTH_SHORT).show()
+
+                    } else if (response.code() == 400) {
+                        Toast.makeText(this@ImagesGridActivity_3, "Bad Request (no 'uuid' query or json data could not be read)", Toast.LENGTH_SHORT).show()
+
+                    } else if (response.code() == 404) {
+                        Toast.makeText(this@ImagesGridActivity_3, "404 Not Found", Toast.LENGTH_SHORT).show()
+
+                    } else if (response.code() == 409) {
+                        Toast.makeText(this@ImagesGridActivity_3, "409 Conflict (json data has already loaded)", Toast.LENGTH_SHORT).show()
+
+                    } else if (response.code() == 500) {
+                        Toast.makeText(this@ImagesGridActivity_3, "500 Internal Server Error", Toast.LENGTH_SHORT).show()
+
+                    } else {
+                        Toast.makeText(this@ImagesGridActivity_3, "False", Toast.LENGTH_SHORT).show()
+
+                    }
+
+                }
+
+                override fun onFailure(call: Call<FrontImageConfigRes>?, t: Throwable?) {
+
+                }
+
+            })
+        }
+
+
+    }
+    private fun getJsonObjectleftImage() {
+
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+
+
+            /*Start-------------------Points Object-----------------------------Starts*/
+
+            val jsonObjectTop = JSONObject()
+            try {
+                jsonObjectTop.put("x", 2.5)
+                jsonObjectTop.put("y", 2.5)
+
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+
+
+            val jsonObjectBottom = JSONObject()
+            try {
+                jsonObjectBottom.put("x", 2.5)
+                jsonObjectBottom.put("y", 2.5)
+
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+
+
+            val jsonObjectPoints = JSONObject()
+            try {
+                jsonObjectPoints.put("top", jsonObjectTop)
+                jsonObjectPoints.put("bottom", jsonObjectBottom)
+
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+
+
+            /*End-------------------Points Object-----------------------------End*/
+
+            /**********************************/
+
+
+            /*Start-------------------intrinsics Object-----------------------------Starts*/
+            //Intrinsics Object
+
+            val lensIntrinsicCalibration = CameraCharacteristics.LENS_INTRINSIC_CALIBRATION
+
+            val manager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
+            var chars: CameraCharacteristics? = null
+
+            try {
+                assert(manager != null)
+                for (cameraId in manager.cameraIdList) {
+                    chars = manager.getCameraCharacteristics(cameraId)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+
+            assert(chars != null)
+            val facing = chars!!.get(CameraCharacteristics.LENS_INTRINSIC_CALIBRATION)
+
+            val jsonObjectK = JSONObject()
+
+            if (facing == null) {
+
+                try {
+                    jsonObjectK.put("fx", null)
+                    jsonObjectK.put("fy", null)
+                    jsonObjectK.put("cx", null)
+                    jsonObjectK.put("cy", null)
+                    jsonObjectK.put("skew", null)
+
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                }
+
+            } else {
+
+                try {
+                    jsonObjectK.put("fx", 2.5)
+                    jsonObjectK.put("fy", 2.5)
+                    jsonObjectK.put("cx", 2.5)
+                    jsonObjectK.put("cy", 2.5)
+                    jsonObjectK.put("skew", 2.5)
+
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                }
+
+            }
+
+
+            var distortion: FloatArray? = FloatArray(4)
+
+            val managerDistor = getSystemService(Context.CAMERA_SERVICE) as CameraManager
+            var charsDistor: CameraCharacteristics? = null
+
+            try {
+                assert(managerDistor != null)
+                for (cameraId in managerDistor.cameraIdList) {
+                    charsDistor = managerDistor.getCameraCharacteristics(cameraId)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+            assert(charsDistor != null)
+
+
+            distortion = charsDistor!!.get(CameraCharacteristics.LENS_RADIAL_DISTORTION)
+
+            val jsonObjectDistortion = JSONObject()
+
+            if (distortion == null) {
+
+                try {
+                    jsonObjectDistortion.put("k1", null)
+                    jsonObjectDistortion.put("k2", null)
+                    jsonObjectDistortion.put("k3", null)
+                    jsonObjectDistortion.put("k4", null)
+                    jsonObjectDistortion.put("p1", null)
+                    jsonObjectDistortion.put("p2", null)
+
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                }
+
+
+            } else {
+
+                try {
+                    jsonObjectDistortion.put("k1", null)
+                    jsonObjectDistortion.put("k2", null)
+                    jsonObjectDistortion.put("k3", null)
+                    jsonObjectDistortion.put("k4", null)
+                    jsonObjectDistortion.put("p1", null)
+                    jsonObjectDistortion.put("p2", null)
+
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                }
+
+
+            }
+
+            val jsonObjectIntrinsics = JSONObject()
+
+            try {
+                jsonObjectIntrinsics.put("K", jsonObjectK)
+                jsonObjectIntrinsics.put("distortion", jsonObjectDistortion)
+
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+
+
+            /*End-------------------intrinsics Object-----------------------------End*/
+
+
+            /**********************************/
+
+            /*Start-------------------extrinsics Object-----------------------------Starts*/
+
+
+            // 1. [Using the Rotation Vector Sensor]
+            // (https://developer.android.com/guide/topics/sensors/sensors_motion.html#sensors-motion-rotate)
+            //X values
+            mSensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+            mSensorX = mSensorManager!!.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
+
+
+            //[Using the Game Rotation Vector Sensor]
+            // (https://developer.android.com/guide/topics/sensors/sensors_position.html#sensors-pos-gamerot)
+            //y values
+            mSensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+            mSensorY = mSensorManager!!.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR)
+
+
+            //[Using the Geomagnetic Rotation Vector Sensor]
+            // (https://developer.android.com/guide/topics/sensors/sensors_position.html#sensors-pos-geomrot)
+            //z values
+            mSensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+            mSensorZ = mSensorManager!!.getDefaultSensor(Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR)
+
+            //Extrinsics Object
+            val jsonObjectRotationVec = JSONObject()
+            try {
+                jsonObjectRotationVec.put("x", mSensorX)
+                jsonObjectRotationVec.put("y", mSensorY)
+                jsonObjectRotationVec.put("z", mSensorZ)
+
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+
+
+            val jsonObjectExtrinsics = JSONObject()
+
+            try {
+                jsonObjectExtrinsics.put("rotation vector component", jsonObjectRotationVec)
+
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+
+
+            /*End-------------------extrinsics Object-----------------------------End*/
+
+
+            /**********************************/
+
+
+            val jsonObjectRoot = JSONObject()
+
+            try {
+                jsonObjectRoot.put("points", jsonObjectPoints)
+                jsonObjectRoot.put("intrinsics", jsonObjectIntrinsics)
+                jsonObjectRoot.put("extrinsics", jsonObjectExtrinsics)
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+
+
+
+
+            restClient.leftImageConfig(jsonObjectRoot).enqueue(object : retrofit2.Callback<LeftImageConfigRes>{
+                override fun onFailure(call: Call<LeftImageConfigRes>, t: Throwable) {
+                    Toast.makeText(this@ImagesGridActivity_3, t.message, Toast.LENGTH_SHORT).show()
+                }
+
+                override fun onResponse(call: Call<LeftImageConfigRes>, response: Response<LeftImageConfigRes>) {
+                    if (response.code() == 201) {
+
+                        if (response.isSuccessful())
+                            Toast.makeText(this@ImagesGridActivity_3, "Success", Toast.LENGTH_SHORT).show()
+
+                        Toast.makeText(this@ImagesGridActivity_3, "OK", Toast.LENGTH_SHORT).show()
+
+                    } else if (response.code() == 400) {
+                        Toast.makeText(this@ImagesGridActivity_3, "Bad Request (no 'uuid' query or json data could not be read)", Toast.LENGTH_SHORT).show()
+
+                    } else if (response.code() == 404) {
+                        Toast.makeText(this@ImagesGridActivity_3, "404 Not Found", Toast.LENGTH_SHORT).show()
+
+                    } else if (response.code() == 409) {
+                        Toast.makeText(this@ImagesGridActivity_3, "409 Conflict (json data has already loaded)", Toast.LENGTH_SHORT).show()
+
+                    } else if (response.code() == 500) {
+                        Toast.makeText(this@ImagesGridActivity_3, "500 Internal Server Error", Toast.LENGTH_SHORT).show()
+
+                    } else {
+                        Toast.makeText(this@ImagesGridActivity_3, "False", Toast.LENGTH_SHORT).show()
+
+                    }
+                }
+
+            })
+
+
+        }
+
+    }
+    private fun getJsonObjectrightImage() {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+
+
+            /*Start-------------------Points Object-----------------------------Starts*/
+
+            val jsonObjectTop = JSONObject()
+            try {
+                jsonObjectTop.put("x", 2.5)
+                jsonObjectTop.put("y", 2.5)
+
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+
+
+            val jsonObjectBottom = JSONObject()
+            try {
+                jsonObjectBottom.put("x", 2.5)
+                jsonObjectBottom.put("y", 2.5)
+
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+
+
+            val jsonObjectPoints = JSONObject()
+            try {
+                jsonObjectPoints.put("top", jsonObjectTop)
+                jsonObjectPoints.put("bottom", jsonObjectBottom)
+
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+
+
+            /*End-------------------Points Object-----------------------------End*/
+
+            /**********************************/
+
+
+            /*Start-------------------intrinsics Object-----------------------------Starts*/
+            //Intrinsics Object
+
+            val lensIntrinsicCalibration = CameraCharacteristics.LENS_INTRINSIC_CALIBRATION
+
+            val manager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
+            var chars: CameraCharacteristics? = null
+
+            try {
+                assert(manager != null)
+                for (cameraId in manager.cameraIdList) {
+                    chars = manager.getCameraCharacteristics(cameraId)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+
+            assert(chars != null)
+            val facing = chars!!.get(CameraCharacteristics.LENS_INTRINSIC_CALIBRATION)
+
+            val jsonObjectK = JSONObject()
+
+            if (facing == null) {
+
+                try {
+                    jsonObjectK.put("fx", null)
+                    jsonObjectK.put("fy", null)
+                    jsonObjectK.put("cx", null)
+                    jsonObjectK.put("cy", null)
+                    jsonObjectK.put("skew", null)
+
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                }
+
+            } else {
+
+                try {
+                    jsonObjectK.put("fx", 2.5)
+                    jsonObjectK.put("fy", 2.5)
+                    jsonObjectK.put("cx", 2.5)
+                    jsonObjectK.put("cy", 2.5)
+                    jsonObjectK.put("skew", 2.5)
+
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                }
+
+            }
+
+
+            var distortion: FloatArray? = FloatArray(4)
+
+            val managerDistor = getSystemService(Context.CAMERA_SERVICE) as CameraManager
+            var charsDistor: CameraCharacteristics? = null
+
+            try {
+                assert(managerDistor != null)
+                for (cameraId in managerDistor.cameraIdList) {
+                    charsDistor = managerDistor.getCameraCharacteristics(cameraId)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+            assert(charsDistor != null)
+
+
+            distortion = charsDistor!!.get(CameraCharacteristics.LENS_RADIAL_DISTORTION)
+
+            val jsonObjectDistortion = JSONObject()
+
+            if (distortion == null) {
+
+                try {
+                    jsonObjectDistortion.put("k1", null)
+                    jsonObjectDistortion.put("k2", null)
+                    jsonObjectDistortion.put("k3", null)
+                    jsonObjectDistortion.put("k4", null)
+                    jsonObjectDistortion.put("p1", null)
+                    jsonObjectDistortion.put("p2", null)
+
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                }
+
+
+            } else {
+
+                try {
+                    jsonObjectDistortion.put("k1", null)
+                    jsonObjectDistortion.put("k2", null)
+                    jsonObjectDistortion.put("k3", null)
+                    jsonObjectDistortion.put("k4", null)
+                    jsonObjectDistortion.put("p1", null)
+                    jsonObjectDistortion.put("p2", null)
+
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                }
+
+
+            }
+
+            val jsonObjectIntrinsics = JSONObject()
+
+            try {
+                jsonObjectIntrinsics.put("K", jsonObjectK)
+                jsonObjectIntrinsics.put("distortion", jsonObjectDistortion)
+
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+
+
+            /*End-------------------intrinsics Object-----------------------------End*/
+
+
+            /**********************************/
+
+            /*Start-------------------extrinsics Object-----------------------------Starts*/
+
+
+            // 1. [Using the Rotation Vector Sensor]
+            // (https://developer.android.com/guide/topics/sensors/sensors_motion.html#sensors-motion-rotate)
+            //X values
+            mSensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+            mSensorX = mSensorManager!!.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
+
+
+            //[Using the Game Rotation Vector Sensor]
+            // (https://developer.android.com/guide/topics/sensors/sensors_position.html#sensors-pos-gamerot)
+            //y values
+            mSensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+            mSensorY = mSensorManager!!.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR)
+
+
+            //[Using the Geomagnetic Rotation Vector Sensor]
+            // (https://developer.android.com/guide/topics/sensors/sensors_position.html#sensors-pos-geomrot)
+            //z values
+            mSensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+            mSensorZ = mSensorManager!!.getDefaultSensor(Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR)
+
+            //Extrinsics Object
+            val jsonObjectRotationVec = JSONObject()
+            try {
+                jsonObjectRotationVec.put("x", mSensorX)
+                jsonObjectRotationVec.put("y", mSensorY)
+                jsonObjectRotationVec.put("z", mSensorZ)
+
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+
+
+            val jsonObjectExtrinsics = JSONObject()
+
+            try {
+                jsonObjectExtrinsics.put("rotation vector component", jsonObjectRotationVec)
+
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+
+
+            /*End-------------------extrinsics Object-----------------------------End*/
+
+
+            /**********************************/
+
+
+            val jsonObjectRoot = JSONObject()
+
+            try {
+                jsonObjectRoot.put("points", jsonObjectPoints)
+                jsonObjectRoot.put("intrinsics", jsonObjectIntrinsics)
+                jsonObjectRoot.put("extrinsics", jsonObjectExtrinsics)
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+
+
+
+
+            restClient.rightImageConfig(jsonObjectRoot).enqueue(object : retrofit2.Callback<RightImageConfigRes>{
+                override fun onFailure(call: Call<RightImageConfigRes>, t: Throwable) {
+                    Toast.makeText(this@ImagesGridActivity_3, t.message, Toast.LENGTH_SHORT).show()
+                }
+
+                override fun onResponse(call: Call<RightImageConfigRes>, response: Response<RightImageConfigRes>) {
+                    if (response.code() == 201) {
+
+                        if (response.isSuccessful())
+                            Toast.makeText(this@ImagesGridActivity_3, "Success", Toast.LENGTH_SHORT).show()
+
+                        Toast.makeText(this@ImagesGridActivity_3, "OK", Toast.LENGTH_SHORT).show()
+
+                    } else if (response.code() == 400) {
+                        Toast.makeText(this@ImagesGridActivity_3, "Bad Request (no 'uuid' query or json data could not be read)", Toast.LENGTH_SHORT).show()
+
+                    } else if (response.code() == 404) {
+                        Toast.makeText(this@ImagesGridActivity_3, "404 Not Found", Toast.LENGTH_SHORT).show()
+
+                    } else if (response.code() == 409) {
+                        Toast.makeText(this@ImagesGridActivity_3, "409 Conflict (json data has already loaded)", Toast.LENGTH_SHORT).show()
+
+                    } else if (response.code() == 500) {
+                        Toast.makeText(this@ImagesGridActivity_3, "500 Internal Server Error", Toast.LENGTH_SHORT).show()
+
+                    } else {
+                        Toast.makeText(this@ImagesGridActivity_3, "False", Toast.LENGTH_SHORT).show()
+
+                    }
+                }
+
+
+            })
+
+
+        }
+
+
+    }
+    private fun getJsonObjectbackImage() {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+
+
+            /*Start-------------------Points Object-----------------------------Starts*/
+
+            val jsonObjectTop = JSONObject()
+            try {
+                jsonObjectTop.put("x", 2.5)
+                jsonObjectTop.put("y", 2.5)
+
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+
+
+            val jsonObjectBottom = JSONObject()
+            try {
+                jsonObjectBottom.put("x", 2.5)
+                jsonObjectBottom.put("y", 2.5)
+
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+
+
+            val jsonObjectPoints = JSONObject()
+            try {
+                jsonObjectPoints.put("top", jsonObjectTop)
+                jsonObjectPoints.put("bottom", jsonObjectBottom)
+
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+
+
+            /*End-------------------Points Object-----------------------------End*/
+
+            /**********************************/
+
+
+            /*Start-------------------intrinsics Object-----------------------------Starts*/
+            //Intrinsics Object
+
+            val lensIntrinsicCalibration = CameraCharacteristics.LENS_INTRINSIC_CALIBRATION
+
+            val manager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
+            var chars: CameraCharacteristics? = null
+
+            try {
+                assert(manager != null)
+                for (cameraId in manager.cameraIdList) {
+                    chars = manager.getCameraCharacteristics(cameraId)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+
+            assert(chars != null)
+            val facing = chars!!.get(CameraCharacteristics.LENS_INTRINSIC_CALIBRATION)
+
+            val jsonObjectK = JSONObject()
+
+            if (facing == null) {
+
+                try {
+                    jsonObjectK.put("fx", null)
+                    jsonObjectK.put("fy", null)
+                    jsonObjectK.put("cx", null)
+                    jsonObjectK.put("cy", null)
+                    jsonObjectK.put("skew", null)
+
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                }
+
+            } else {
+
+                try {
+                    jsonObjectK.put("fx", 2.5)
+                    jsonObjectK.put("fy", 2.5)
+                    jsonObjectK.put("cx", 2.5)
+                    jsonObjectK.put("cy", 2.5)
+                    jsonObjectK.put("skew", 2.5)
+
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                }
+
+            }
+
+
+            var distortion: FloatArray? = FloatArray(4)
+
+            val managerDistor = getSystemService(Context.CAMERA_SERVICE) as CameraManager
+            var charsDistor: CameraCharacteristics? = null
+
+            try {
+                assert(managerDistor != null)
+                for (cameraId in managerDistor.cameraIdList) {
+                    charsDistor = managerDistor.getCameraCharacteristics(cameraId)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+            assert(charsDistor != null)
+
+
+            distortion = charsDistor!!.get(CameraCharacteristics.LENS_RADIAL_DISTORTION)
+
+            val jsonObjectDistortion = JSONObject()
+
+            if (distortion == null) {
+
+                try {
+                    jsonObjectDistortion.put("k1", null)
+                    jsonObjectDistortion.put("k2", null)
+                    jsonObjectDistortion.put("k3", null)
+                    jsonObjectDistortion.put("k4", null)
+                    jsonObjectDistortion.put("p1", null)
+                    jsonObjectDistortion.put("p2", null)
+
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                }
+
+
+            } else {
+
+                try {
+                    jsonObjectDistortion.put("k1", null)
+                    jsonObjectDistortion.put("k2", null)
+                    jsonObjectDistortion.put("k3", null)
+                    jsonObjectDistortion.put("k4", null)
+                    jsonObjectDistortion.put("p1", null)
+                    jsonObjectDistortion.put("p2", null)
+
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                }
+
+
+            }
+
+            val jsonObjectIntrinsics = JSONObject()
+
+            try {
+                jsonObjectIntrinsics.put("K", jsonObjectK)
+                jsonObjectIntrinsics.put("distortion", jsonObjectDistortion)
+
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+
+
+            /*End-------------------intrinsics Object-----------------------------End*/
+
+
+            /**********************************/
+
+            /*Start-------------------extrinsics Object-----------------------------Starts*/
+
+
+            // 1. [Using the Rotation Vector Sensor]
+            // (https://developer.android.com/guide/topics/sensors/sensors_motion.html#sensors-motion-rotate)
+            //X values
+            mSensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+            mSensorX = mSensorManager!!.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
+
+
+            //[Using the Game Rotation Vector Sensor]
+            // (https://developer.android.com/guide/topics/sensors/sensors_position.html#sensors-pos-gamerot)
+            //y values
+            mSensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+            mSensorY = mSensorManager!!.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR)
+
+
+            //[Using the Geomagnetic Rotation Vector Sensor]
+            // (https://developer.android.com/guide/topics/sensors/sensors_position.html#sensors-pos-geomrot)
+            //z values
+            mSensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+            mSensorZ = mSensorManager!!.getDefaultSensor(Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR)
+
+            //Extrinsics Object
+            val jsonObjectRotationVec = JSONObject()
+            try {
+                jsonObjectRotationVec.put("x", mSensorX)
+                jsonObjectRotationVec.put("y", mSensorY)
+                jsonObjectRotationVec.put("z", mSensorZ)
+
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+
+
+            val jsonObjectExtrinsics = JSONObject()
+
+            try {
+                jsonObjectExtrinsics.put("rotation vector component", jsonObjectRotationVec)
+
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+
+
+            /*End-------------------extrinsics Object-----------------------------End*/
+
+
+            /**********************************/
+
+
+            val jsonObjectRoot = JSONObject()
+
+            try {
+                jsonObjectRoot.put("points", jsonObjectPoints)
+                jsonObjectRoot.put("intrinsics", jsonObjectIntrinsics)
+                jsonObjectRoot.put("extrinsics", jsonObjectExtrinsics)
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+
+
+
+
+            restClient.backImageConfig(jsonObjectRoot).enqueue(object : retrofit2.Callback<BackImageConfigRes>{
+                override fun onFailure(call: Call<BackImageConfigRes>, t: Throwable) {
+                    Toast.makeText(this@ImagesGridActivity_3, t.message, Toast.LENGTH_SHORT).show()
+                }
+
+                override fun onResponse(call: Call<BackImageConfigRes>, response: Response<BackImageConfigRes>) {
+                    if (response.code() == 201) {
+
+                        if (response.isSuccessful())
+                            Toast.makeText(this@ImagesGridActivity_3, "Success", Toast.LENGTH_SHORT).show()
+
+                        Toast.makeText(this@ImagesGridActivity_3, "OK", Toast.LENGTH_SHORT).show()
+
+                    } else if (response.code() == 400) {
+                        Toast.makeText(this@ImagesGridActivity_3, "Bad Request (no 'uuid' query or json data could not be read)", Toast.LENGTH_SHORT).show()
+
+                    } else if (response.code() == 404) {
+                        Toast.makeText(this@ImagesGridActivity_3, "404 Not Found", Toast.LENGTH_SHORT).show()
+
+                    } else if (response.code() == 409) {
+                        Toast.makeText(this@ImagesGridActivity_3, "409 Conflict (json data has already loaded)", Toast.LENGTH_SHORT).show()
+
+                    } else if (response.code() == 500) {
+                        Toast.makeText(this@ImagesGridActivity_3, "500 Internal Server Error", Toast.LENGTH_SHORT).show()
+
+                    } else {
+                        Toast.makeText(this@ImagesGridActivity_3, "False", Toast.LENGTH_SHORT).show()
+
+                    }                          }
+
+
+            })
+
+
+        }
+
+
+    }
+
     private fun saveImageToFile(file: File?) {
         if (mCameraBitmap != null) {
             var outStream: FileOutputStream? = null
@@ -658,8 +1736,8 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
                     Toast.makeText(this@ImagesGridActivity_3, "Unable to save image to file.",
                             Toast.LENGTH_LONG).show()
                 } else {
-                    Toast.makeText(this@ImagesGridActivity_3, "Saved image to: " + file.path,
-                            Toast.LENGTH_LONG).show()
+                   /* Toast.makeText(this@ImagesGridActivity_3, "Saved image to: " + file.path,
+                            Toast.LENGTH_LONG).show()*/
                 }
                 outStream.close()
             } catch (e: Exception) {
@@ -690,8 +1768,6 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
         }
         return null
     }
-
-
 
 
     private fun getRealPathFromURI(tempUri: Uri): String? {

@@ -42,6 +42,7 @@ public class ApiCalling extends Activity{
 
 
             /*Start-------------------Points Object-----------------------------Starts*/
+
             JSONObject jsonObjectTop  = new JSONObject();
             try {
                 jsonObjectTop.put("x",2.5);
@@ -70,6 +71,8 @@ public class ApiCalling extends Activity{
             } catch (JSONException e) {
                 e.printStackTrace();
             }
+
+
             /*End-------------------Points Object-----------------------------End*/
 
             /**********************************/
