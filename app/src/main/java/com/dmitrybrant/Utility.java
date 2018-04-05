@@ -1,7 +1,7 @@
 package com.dmitrybrant;
 
 import android.content.Context;
-import android.widget.Toast;
+import android.util.Log;
 
 import com.dmitrybrant.response.sessionResponse.CreateSessionRes;
 import com.dmitrybrant.response.sessionResponse.DeleteSessionRes;
@@ -19,17 +19,25 @@ import retrofit2.Response;
 public class Utility {
 
 
-    static Context context;
+    Context context;
 
-    public static RetrofitLibrary.GitApiInterface restClient = RetrofitLibrary.getClient();
-    static SharedPreferencesClass sharedPreferencesClass;
+
+    SharedPreferencesClass sharedPreferencesClass;
+
+
+
 
     public Utility(Context context) {
         this.context = context;
 
+        new SharedPreferencesClass(context);
     }
 
-    public static void  createSession1(){
+
+
+    public  void  createSession1(){
+
+        RetrofitLibrary.GitApiInterface restClient = RetrofitLibrary.getClient();
 
         restClient.createSession().enqueue(new Callback<CreateSessionRes>() {
             @Override
@@ -38,37 +46,34 @@ public class Utility {
 
                 if(response.code()==201){
 
-                    Toast.makeText(context,"OK (_uuid_ is response body)",Toast.LENGTH_SHORT).show();
 
+                    Log.d("create session","201 OK (_uuid_ is response body)");
 
                     if(response.isSuccessful()){
-
-
-                        sharedPreferencesClass = new SharedPreferencesClass(context);
 
                         sharedPreferencesClass.setSession_key(response.body().toString());
 
                     }
-                    else
-                    {
 
-
-                    }
                 }
                 else if(response.code()==500){
-                    Toast.makeText(context,"Internal Server Error",Toast.LENGTH_SHORT).show();
+                    Log.d("create session","500 Internal Server Error");
 
                 }
                 else if(response.code()==503){
-                    Toast.makeText(context,"Service Unavailable (if any session has already created and used)",Toast.LENGTH_SHORT).show();
+                    Log.d("create session","503 Service Unavailable (if any session has already created and used)");
 
+                }
+                else
+                {
+                    sharedPreferencesClass.setSession_key("123456");
                 }
 
             }
 
             @Override
             public void onFailure(Call<CreateSessionRes> call, Throwable t) {
-                Toast.makeText(context,t.getMessage(),Toast.LENGTH_SHORT).show();
+                Log.d("failure delete session",t.getMessage());
 
             }
         });
@@ -76,40 +81,37 @@ public class Utility {
     }
 
 
-    public static void deleteSession(){
 
 
-        restClient.deleteSession().enqueue(new Callback<DeleteSessionRes>() {
+
+    public void deleteSession(){
+
+        RetrofitLibrary.GitApiInterface restClient = RetrofitLibrary.getClient();
+
+        restClient.deleteSession(RetrofitLibrary.GitApiInterface.session_key).enqueue(new Callback<DeleteSessionRes>() {
             @Override
             public void onResponse(Call<DeleteSessionRes> call, Response<DeleteSessionRes> response) {
 
                 if(response.code()==200){
 
-                    Toast.makeText(context,"OK",Toast.LENGTH_SHORT).show();
+                    Log.d("delete session","200 ok");
 
 
                     if(response.isSuccessful()){
-
-
-                        sharedPreferencesClass.setSession_key("");
-
+                        sharedPreferencesClass.setSession_key("123");
                     }
-                    else
-                    {
 
-
-                    }
                 }
                 else if(response.code()==400){
-                    Toast.makeText(context,"Bad Request (no 'uuid' query)",Toast.LENGTH_SHORT).show();
+                    Log.d("delete session","400 Bad Request (no 'uuid' query)");
 
                 }
                 else if(response.code()==404){
-                    Toast.makeText(context,"Not Found",Toast.LENGTH_SHORT).show();
+                    Log.d("delete session","404 Not Found");
 
                 }
                 else if(response.code()==500){
-                    Toast.makeText(context,"Internal Server Error",Toast.LENGTH_SHORT).show();
+                    Log.d("delete session","500 Internal Server Error");
 
                 }
 
@@ -119,7 +121,7 @@ public class Utility {
 
             @Override
             public void onFailure(Call<DeleteSessionRes> call, Throwable t) {
-                Toast.makeText(context,t.getMessage(),Toast.LENGTH_SHORT).show();
+                Log.d("failure delete session",t.getMessage());
 
             }
         });

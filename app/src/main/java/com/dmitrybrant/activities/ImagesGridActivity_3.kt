@@ -6,6 +6,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
+import android.graphics.drawable.BitmapDrawable
 import android.hardware.Sensor
 import android.hardware.SensorManager
 import android.hardware.camera2.CameraCharacteristics
@@ -16,12 +17,15 @@ import android.os.Bundle
 import android.os.Environment
 import android.os.Handler
 import android.provider.MediaStore
+import android.support.annotation.NonNull
 import android.support.v7.app.AppCompatActivity
+import android.util.Log
 import android.view.*
 import android.widget.BaseAdapter
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import com.dmitrybrant.Utility
 import com.dmitrybrant.retrofitLibrary.RetrofitLibrary
 import com.dmitrybrant.models.ImagesModel
 import com.dmitrybrant.modelviewer.MainActivityPlyParser
@@ -72,12 +76,13 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
     var imagesList = ArrayList<ImagesModel>()
     lateinit var imageFilePath: String
     var imageViewGl: ImageView? = null
-    private val TAKE_PICTURE_REQUEST_LEFT = 20
-    private val TAKE_PICTURE_REQUEST_RIGHT = 30
-    private val TAKE_PICTURE_REQUEST_FRONT = 40
-    private val TAKE_PICTURE_REQUEST_BACK = 50
+    private val TAKE_PICTURE_REQUEST_FRONT = 0
+    private val TAKE_PICTURE_REQUEST_BACK = 1
+    private val TAKE_PICTURE_REQUEST_LEFT = 2
+    private val TAKE_PICTURE_REQUEST_RIGHT = 3
     private var mCameraBitmap: Bitmap? = null
     private var txtCreate: TextView? = null
+    var myPhotos = BooleanArray(4)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -93,7 +98,7 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
         txtCreate = findViewById(R.id.txtCreate) as TextView
 
 
-       val dialog = SpotsDialog(this,R.style.CustomProgressDialog)
+        val dialog = SpotsDialog(this,R.style.CustomProgressDialog)
 
         txtCreate!!.setOnClickListener{
 
@@ -155,16 +160,29 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
     }
 
 
+
+
+
     private fun startImageCapture( requestCode: Int) {
-        // startActivityForResult(new Intent(MediaStore.ACTION_IMAGE_CAPTURE), TAKE_PICTURE_REQUEST_B);
-        startActivityForResult(Intent(this@ImagesGridActivity_3, CameraActivity::class.java),requestCode)
 
 
-       /* val intent = Intent(this@ImagesGridActivity_3, AndroidSurfaceviewExample::class.java)
+        if(myPhotos[requestCode]){
 
-        startActivity(intent)
-*/
+            Utility(this).deleteSession()
+            Log.d("Front Photo is exist","delete session called")
+
+        }
+        else
+        {
+            startActivityForResult(Intent(this@ImagesGridActivity_3, CameraActivity::class.java),requestCode)
+
+        }
+
+
+
+
     }
+
 
     @Throws(IOException::class)
     fun createImageFile(): File {
@@ -178,240 +196,16 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
     }
 
-
     private var mCapturedImageURI: Uri? = null
     val restClient = RetrofitLibrary.getClient()
 
-
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        //For left image
-        if (requestCode == TAKE_PICTURE_REQUEST_LEFT) {
-            if (resultCode == Activity.RESULT_OK) {
-                // Recycle the previous bitmap.
-
-                if (mCameraBitmap != null && !mCameraBitmap!!.isRecycled()) {
-                    // mCameraBitmap!!.recycle();
-                    mCameraBitmap = null;
-                }
-
-
-                val extras = data?.extras
-                val cameraData = extras!!.getByteArray(CameraActivity.EXTRA_CAMERA_DATA)
-
-                if (cameraData != null) {
-                    mCameraBitmap = BitmapFactory.decodeByteArray(cameraData, 0, cameraData.size)
-
-                    // val photo: Bitmap// this is your image.
-                    val stream = ByteArrayOutputStream()
-                    mCameraBitmap!!.compress(Bitmap.CompressFormat.PNG, 100, stream)
-
-
-
-                    //creating request body for file
-
-                    // CALL THIS METHOD TO GET THE URI FROM THE BITMAP
-                    mCapturedImageURI = getImageUri(applicationContext, mCameraBitmap!!)
-
-                    // CALL THIS METHOD TO GET THE ACTUAL PATH
-                    val finalFile = File(getRealPathFromURI(mCapturedImageURI!!))
-
-
-                   // val requestFile = RequestBody.create(MediaType.parse(contentResolver.getType(mCapturedImageURI)!!), finalFile)
-                   // val requestFile = RequestBody.create(MediaType.parse(contentResolver.getType(mCapturedImageURI)!!), finalFile)
-                    val requestFile = RequestBody.create(MediaType.parse("image/*"), finalFile)
-
-
-                    //java.io.EOFException: End of input at line 1 column 1
-
-                    //Api for left image
-                    restClient.uploadleftImage(requestFile).enqueue(object : retrofit2.Callback<LeftImageResponse> {
-                        override fun onResponse(call: Call<LeftImageResponse>, response: Response<LeftImageResponse>) {
-
-                            if (response.code() == 201) run {
-
-                                if (response.isSuccessful)
-                                    Toast.makeText(this@ImagesGridActivity_3, "Success", Toast.LENGTH_SHORT).show()
-
-                                Toast.makeText(this@ImagesGridActivity_3, "OK", Toast.LENGTH_SHORT).show()
-
-                            }
-                            else if(response.code() == 400){
-
-                                Toast.makeText(this@ImagesGridActivity_3, "Bad Request (no 'uuid' query or image could not be read)", Toast.LENGTH_SHORT).show()
-
-                            }
-                            else if(response.code() == 404){
-
-                                Toast.makeText(this@ImagesGridActivity_3, "404 Not Found", Toast.LENGTH_SHORT).show()
-
-                            }
-                            else if(response.code() == 409){
-
-                                Toast.makeText(this@ImagesGridActivity_3, "409 Conflict (image is still loading or has already loaded)", Toast.LENGTH_SHORT).show()
-
-                            }
-                            else if(response.code() == 500){
-
-                                Toast.makeText(this@ImagesGridActivity_3, "Internal Server Error", Toast.LENGTH_SHORT).show()
-
-                            }
-                        }
-
-                        override fun onFailure(call: Call<LeftImageResponse>, t: Throwable) {
-                            Toast.makeText(this@ImagesGridActivity_3,t.toString(),Toast.LENGTH_SHORT).show()
-
-                        }
-                    })
-
-                    getJsonObjectleftImage()
-
-
-                    imageViewGl!!.setImageBitmap(RotateBitmap(mCameraBitmap!!,90f))
-
-
-                    mCameraBitmap!!.byteCount;
-
-
-                    val saveFile = openFileForImage()
-                    if (saveFile != null) {
-                        saveImageToFile(saveFile)
-                    } else {
-                        Toast.makeText(this@ImagesGridActivity_3, "Unable to open file for saving image.",
-                                Toast.LENGTH_LONG).show()
-                    }
-
-
-
-                    imageViewGl!!.setOnTouchListener(this)
-
-                }
-            } else {
-                mCameraBitmap = null
-
-            }
-
-            //For right
-        }
-
-        //For right image
-        else if(requestCode == TAKE_PICTURE_REQUEST_RIGHT){
-
-            if (resultCode == Activity.RESULT_OK) {
-
-                if (mCameraBitmap != null && !mCameraBitmap!!.isRecycled()) {
-                    // mCameraBitmap!!.recycle();
-                    mCameraBitmap = null;
-                }
-
-                val extras = data?.extras
-                val cameraData = extras!!.getByteArray(CameraActivity.EXTRA_CAMERA_DATA)
-
-
-                if (cameraData != null) {
-
-                    mCameraBitmap = BitmapFactory.decodeByteArray(cameraData, 0, cameraData.size)
-
-                    // val photo: Bitmap// this is your image.
-                    val stream = ByteArrayOutputStream()
-                    mCameraBitmap!!.compress(Bitmap.CompressFormat.PNG, 100, stream)
-
-
-
-                    //creating request body for file
-
-                    // CALL THIS METHOD TO GET THE URI FROM THE BITMAP
-                    mCapturedImageURI = getImageUri(applicationContext, mCameraBitmap!!)
-
-                    // CALL THIS METHOD TO GET THE ACTUAL PATH
-                    val finalFile = File(getRealPathFromURI(mCapturedImageURI!!))
-
-
-                    //val requestFile = RequestBody.create(MediaType.parse(contentResolver.getType(mCapturedImageURI)!!), finalFile)
-
-
-                    val requestFile = RequestBody.create(MediaType.parse("image/*"), finalFile)
-
-
-                    //Api for right image
-                    restClient.uploadrightImage(requestFile).enqueue(object : retrofit2.Callback<RightImageResponse> {
-
-                        override fun onResponse(call: Call<RightImageResponse>, response: Response<RightImageResponse>) {
-                            if (response.code() == 201) run {
-
-                                if (response.isSuccessful)
-                                    Toast.makeText(this@ImagesGridActivity_3, "Success", Toast.LENGTH_SHORT).show()
-
-                                Toast.makeText(this@ImagesGridActivity_3, "OK", Toast.LENGTH_SHORT).show()
-
-                            }
-                            else if(response.code() == 400){
-
-                                Toast.makeText(this@ImagesGridActivity_3, "Bad Request (no 'uuid' query or image could not be read)", Toast.LENGTH_SHORT).show()
-
-                            }
-                            else if(response.code() == 404){
-
-                                Toast.makeText(this@ImagesGridActivity_3, "404 Not Found", Toast.LENGTH_SHORT).show()
-
-                            }
-                            else if(response.code() == 409){
-
-                                Toast.makeText(this@ImagesGridActivity_3, "409 Conflict (image is still loading or has already loaded)", Toast.LENGTH_SHORT).show()
-
-                            }
-                            else if(response.code() == 500){
-
-                                Toast.makeText(this@ImagesGridActivity_3, "Internal Server Error", Toast.LENGTH_SHORT).show()
-
-                            }
-                        }
-
-                        override fun onFailure(call: Call<RightImageResponse>?, t: Throwable?) {
-                            Toast.makeText(this@ImagesGridActivity_3, t.toString(), Toast.LENGTH_SHORT).show()
-                        }
-
-
-                    })
-
-                    getJsonObjectrightImage()
-
-                    imageViewGl!!.setImageBitmap(RotateBitmap(mCameraBitmap!!,90f))
-
-
-                    mCameraBitmap!!.byteCount;
-
-
-
-
-
-                    val saveFile = openFileForImage()
-                    if (saveFile != null) {
-                        saveImageToFile(saveFile)
-                    } else {
-                        Toast.makeText(this@ImagesGridActivity_3, "Unable to open file for saving image.",
-                                Toast.LENGTH_LONG).show()
-                    }
-
-
-
-                    imageViewGl!!.setOnTouchListener(this)
-
-                }
-
-
-            }
-
-            else {
-                mCameraBitmap = null
-
-            }
-
-        }
 
         //For front image
-        else if(requestCode == TAKE_PICTURE_REQUEST_FRONT){
+        if(requestCode == TAKE_PICTURE_REQUEST_FRONT){
 
             if (resultCode == Activity.RESULT_OK) {
+
 
                 if (mCameraBitmap != null && !mCameraBitmap!!.isRecycled()) {
                     // mCameraBitmap!!.recycle();
@@ -443,7 +237,7 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
 
                     //Api for front image
-                    restClient.uploadfrontImage(requestFile).enqueue(object : retrofit2.Callback<FrontImageResponse> {
+                    restClient.uploadfrontImage(requestFile,RetrofitLibrary.GitApiInterface.session_key).enqueue(object : retrofit2.Callback<FrontImageResponse> {
 
                         override fun onResponse(call: Call<FrontImageResponse>, response: Response<FrontImageResponse>) {
 
@@ -492,6 +286,7 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
 
                     imageViewGl!!.setImageBitmap(RotateBitmap(mCameraBitmap!!,90f))
+//                    myPhotos[resultCode]=true
 
 
 
@@ -560,12 +355,12 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
                     val finalFile = File(getRealPathFromURI(mCapturedImageURI!!))
 
 
-                   // val requestFile = RequestBody.create(MediaType.parse(contentResolver.getType(mCapturedImageURI)!!), finalFile)
+                    // val requestFile = RequestBody.create(MediaType.parse(contentResolver.getType(mCapturedImageURI)!!), finalFile)
                     val requestFile = RequestBody.create(MediaType.parse("image/*"), finalFile)
 
 
                     //Api for back image
-                    restClient.uploadbackImage(requestFile).enqueue(object : retrofit2.Callback<BackImageResponse> {
+                    restClient.uploadbackImage(requestFile,RetrofitLibrary.GitApiInterface.session_key).enqueue(object : retrofit2.Callback<BackImageResponse> {
                         override fun onResponse(call: Call<BackImageResponse>, response: Response<BackImageResponse>) {
                             if (response.code() == 201) run {
 
@@ -608,7 +403,7 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
                     getJsonObjectbackImage()
 
                     imageViewGl!!.setImageBitmap(RotateBitmap(mCameraBitmap!!,90f))
-
+//                    myPhotos[1]=true;
 
 
                     mCameraBitmap!!.byteCount;
@@ -638,9 +433,235 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
             }
         }
 
+
+        //For left image
+        else if (requestCode == TAKE_PICTURE_REQUEST_LEFT) {
+            if (resultCode == Activity.RESULT_OK) {
+                // Recycle the previous bitmap.
+
+
+
+                if (mCameraBitmap != null && !mCameraBitmap!!.isRecycled()) {
+                    // mCameraBitmap!!.recycle();
+                    mCameraBitmap = null;
+                }
+
+
+                val extras = data?.extras
+                val cameraData = extras!!.getByteArray(CameraActivity.EXTRA_CAMERA_DATA)
+
+                if (cameraData != null) {
+                    mCameraBitmap = BitmapFactory.decodeByteArray(cameraData, 0, cameraData.size)
+
+                    // val photo: Bitmap// this is your image.
+                    val stream = ByteArrayOutputStream()
+                    mCameraBitmap!!.compress(Bitmap.CompressFormat.PNG, 100, stream)
+
+
+
+                    //creating request body for file
+
+                    // CALL THIS METHOD TO GET THE URI FROM THE BITMAP
+                    mCapturedImageURI = getImageUri(applicationContext, mCameraBitmap!!)
+
+                    // CALL THIS METHOD TO GET THE ACTUAL PATH
+                    val finalFile = File(getRealPathFromURI(mCapturedImageURI!!))
+
+
+                    // val requestFile = RequestBody.create(MediaType.parse(contentResolver.getType(mCapturedImageURI)!!), finalFile)
+                    // val requestFile = RequestBody.create(MediaType.parse(contentResolver.getType(mCapturedImageURI)!!), finalFile)
+                    val requestFile = RequestBody.create(MediaType.parse("image/*"), finalFile)
+
+
+                    //java.io.EOFException: End of input at line 1 column 1
+
+                    //Api for left image
+                    restClient.uploadleftImage(requestFile,RetrofitLibrary.GitApiInterface.session_key).enqueue(object : retrofit2.Callback<LeftImageResponse> {
+                        override fun onResponse(call: Call<LeftImageResponse>, response: Response<LeftImageResponse>) {
+
+                            if (response.code() == 201) run {
+
+                                if (response.isSuccessful)
+                                    Toast.makeText(this@ImagesGridActivity_3, "Success", Toast.LENGTH_SHORT).show()
+
+                                Toast.makeText(this@ImagesGridActivity_3, "OK", Toast.LENGTH_SHORT).show()
+
+                            }
+                            else if(response.code() == 400){
+
+                                Toast.makeText(this@ImagesGridActivity_3, "Bad Request (no 'uuid' query or image could not be read)", Toast.LENGTH_SHORT).show()
+
+                            }
+                            else if(response.code() == 404){
+
+                                Toast.makeText(this@ImagesGridActivity_3, "404 Not Found", Toast.LENGTH_SHORT).show()
+
+                            }
+                            else if(response.code() == 409){
+
+                                Toast.makeText(this@ImagesGridActivity_3, "409 Conflict (image is still loading or has already loaded)", Toast.LENGTH_SHORT).show()
+
+                            }
+                            else if(response.code() == 500){
+
+                                Toast.makeText(this@ImagesGridActivity_3, "Internal Server Error", Toast.LENGTH_SHORT).show()
+
+                            }
+                        }
+
+                        override fun onFailure(call: Call<LeftImageResponse>, t: Throwable) {
+                            Toast.makeText(this@ImagesGridActivity_3,t.toString(),Toast.LENGTH_SHORT).show()
+
+                        }
+                    })
+
+                    getJsonObjectleftImage()
+
+
+                    imageViewGl!!.setImageBitmap(RotateBitmap(mCameraBitmap!!,90f))
+
+                    myPhotos[2]=true;
+
+                    mCameraBitmap!!.byteCount;
+
+
+                    val saveFile = openFileForImage()
+                    if (saveFile != null) {
+                        saveImageToFile(saveFile)
+                    } else {
+                        Toast.makeText(this@ImagesGridActivity_3, "Unable to open file for saving image.",
+                                Toast.LENGTH_LONG).show()
+                    }
+
+
+
+                    imageViewGl!!.setOnTouchListener(this)
+
+                }
+            } else {
+                mCameraBitmap = null
+
+            }
+
+            //For right
+        }
+
+        //For right image
+        else if(requestCode == TAKE_PICTURE_REQUEST_RIGHT){
+
+            if (resultCode == Activity.RESULT_OK) {
+
+                if (mCameraBitmap != null && !mCameraBitmap!!.isRecycled()) {
+                    // mCameraBitmap!!.recycle();
+                    mCameraBitmap = null;
+                }
+
+                val extras = data?.extras
+                val cameraData = extras!!.getByteArray(CameraActivity.EXTRA_CAMERA_DATA)
+
+
+                if (cameraData != null) {
+
+                    mCameraBitmap = BitmapFactory.decodeByteArray(cameraData, 0, cameraData.size)
+
+                    // val photo: Bitmap// this is your image.
+                    val stream = ByteArrayOutputStream()
+                    mCameraBitmap!!.compress(Bitmap.CompressFormat.PNG, 100, stream)
+
+
+
+                    //creating request body for file
+
+                    // CALL THIS METHOD TO GET THE URI FROM THE BITMAP
+                    mCapturedImageURI = getImageUri(applicationContext, mCameraBitmap!!)
+
+                    // CALL THIS METHOD TO GET THE ACTUAL PATH
+                    val finalFile = File(getRealPathFromURI(mCapturedImageURI!!))
+
+
+                    //val requestFile = RequestBody.create(MediaType.parse(contentResolver.getType(mCapturedImageURI)!!), finalFile)
+
+
+                    val requestFile = RequestBody.create(MediaType.parse("image/*"), finalFile)
+
+
+                    //Api for right image
+                    restClient.uploadrightImage(requestFile,RetrofitLibrary.GitApiInterface.session_key).enqueue(object : retrofit2.Callback<RightImageResponse> {
+
+                        override fun onResponse(call: Call<RightImageResponse>, response: Response<RightImageResponse>) {
+                            if (response.code() == 201) run {
+
+                                if (response.isSuccessful)
+                                    Toast.makeText(this@ImagesGridActivity_3, "Success", Toast.LENGTH_SHORT).show()
+
+                                Toast.makeText(this@ImagesGridActivity_3, "OK", Toast.LENGTH_SHORT).show()
+
+                            }
+                            else if(response.code() == 400){
+
+                                Toast.makeText(this@ImagesGridActivity_3, "Bad Request (no 'uuid' query or image could not be read)", Toast.LENGTH_SHORT).show()
+
+                            }
+                            else if(response.code() == 404){
+
+                                Toast.makeText(this@ImagesGridActivity_3, "404 Not Found", Toast.LENGTH_SHORT).show()
+
+                            }
+                            else if(response.code() == 409){
+
+                                Toast.makeText(this@ImagesGridActivity_3, "409 Conflict (image is still loading or has already loaded)", Toast.LENGTH_SHORT).show()
+
+                            }
+                            else if(response.code() == 500){
+
+                                Toast.makeText(this@ImagesGridActivity_3, "Internal Server Error", Toast.LENGTH_SHORT).show()
+
+                            }
+                        }
+
+                        override fun onFailure(call: Call<RightImageResponse>?, t: Throwable?) {
+                            Toast.makeText(this@ImagesGridActivity_3, t.toString(), Toast.LENGTH_SHORT).show()
+                        }
+
+
+                    })
+
+                    getJsonObjectrightImage()
+
+                    imageViewGl!!.setImageBitmap(RotateBitmap(mCameraBitmap!!,90f))
+                    myPhotos[3]=true;
+
+
+                    mCameraBitmap!!.byteCount;
+
+
+
+                    val saveFile = openFileForImage()
+                    if (saveFile != null) {
+                        saveImageToFile(saveFile)
+                    } else {
+                        Toast.makeText(this@ImagesGridActivity_3, "Unable to open file for saving image.",
+                                Toast.LENGTH_LONG).show()
+                    }
+
+
+
+                    imageViewGl!!.setOnTouchListener(this)
+
+                }
+
+
+            }
+
+            else {
+                mCameraBitmap = null
+
+            }
+
+        }
+
+
     }
-
-
 
     private var mSensorManager: SensorManager? = null
     private var mSensorX: Sensor? = null
@@ -897,7 +918,7 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
 
 
-            restClient.frontImageConfig(jsonObjectRoot).enqueue(object : retrofit2.Callback<FrontImageConfigRes>{
+            restClient.frontImageConfig(jsonObjectRoot,RetrofitLibrary.GitApiInterface.session_key).enqueue(object : retrofit2.Callback<FrontImageConfigRes>{
                 override fun onResponse(call: Call<FrontImageConfigRes>, response: Response<FrontImageConfigRes>) {
 
                     if (response.code() == 201) {
@@ -1163,7 +1184,7 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
 
 
-            restClient.leftImageConfig(jsonObjectRoot).enqueue(object : retrofit2.Callback<LeftImageConfigRes>{
+            restClient.leftImageConfig(jsonObjectRoot,RetrofitLibrary.GitApiInterface.session_key).enqueue(object : retrofit2.Callback<LeftImageConfigRes>{
                 override fun onFailure(call: Call<LeftImageConfigRes>, t: Throwable) {
                     Toast.makeText(this@ImagesGridActivity_3, t.message, Toast.LENGTH_SHORT).show()
                 }
@@ -1427,7 +1448,7 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
 
 
-            restClient.rightImageConfig(jsonObjectRoot).enqueue(object : retrofit2.Callback<RightImageConfigRes>{
+            restClient.rightImageConfig(jsonObjectRoot,RetrofitLibrary.GitApiInterface.session_key).enqueue(object : retrofit2.Callback<RightImageConfigRes>{
                 override fun onFailure(call: Call<RightImageConfigRes>, t: Throwable) {
                     Toast.makeText(this@ImagesGridActivity_3, t.message, Toast.LENGTH_SHORT).show()
                 }
@@ -1693,7 +1714,7 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
 
 
-            restClient.backImageConfig(jsonObjectRoot).enqueue(object : retrofit2.Callback<BackImageConfigRes>{
+            restClient.backImageConfig(jsonObjectRoot,RetrofitLibrary.GitApiInterface.session_key).enqueue(object : retrofit2.Callback<BackImageConfigRes>{
                 override fun onFailure(call: Call<BackImageConfigRes>, t: Throwable) {
                     Toast.makeText(this@ImagesGridActivity_3, t.message, Toast.LENGTH_SHORT).show()
                 }
@@ -1741,8 +1762,8 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
                     Toast.makeText(this@ImagesGridActivity_3, "Unable to save image to file.",
                             Toast.LENGTH_LONG).show()
                 } else {
-                   /* Toast.makeText(this@ImagesGridActivity_3, "Saved image to: " + file.path,
-                            Toast.LENGTH_LONG).show()*/
+                    /* Toast.makeText(this@ImagesGridActivity_3, "Saved image to: " + file.path,
+                             Toast.LENGTH_LONG).show()*/
                 }
                 outStream.close()
             } catch (e: Exception) {

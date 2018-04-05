@@ -35,7 +35,7 @@ public class ApiCalling extends Activity{
         super.onCreate(savedInstanceState);
 
 
-        final RetrofitLibrary.GitApiInterface restClient = RetrofitLibrary.getClient();
+        //final RetrofitLibrary.GitApiInterface restClient = RetrofitLibrary.getClient();
 
 
 
@@ -268,6 +268,7 @@ public class ApiCalling extends Activity{
             }
 
 
+/*
             restClient.leftImageConfig(jsonObjectRoot).enqueue(new Callback<LeftImageConfigRes>() {
                 @Override
                 public void onResponse(Call<LeftImageConfigRes> call, retrofit2.Response<LeftImageConfigRes> response) {
@@ -312,9 +313,11 @@ public class ApiCalling extends Activity{
 
                 }
             });
+*/
 
 
 
+/*
             restClient.genderHeight().enqueue(new Callback<ConfigGenderHeight>() {
                 @Override
                 public void onResponse(Call<ConfigGenderHeight> call, retrofit2.Response<ConfigGenderHeight> response) {
@@ -361,6 +364,7 @@ public class ApiCalling extends Activity{
 
                 }
             });
+*/
 
 
         }

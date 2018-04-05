@@ -31,6 +31,7 @@ import retrofit2.http.GET;
 import retrofit2.http.Multipart;
 import retrofit2.http.POST;
 import retrofit2.http.Part;
+import retrofit2.http.Query;
 
 public class RetrofitLibrary {
 
@@ -40,7 +41,6 @@ public class RetrofitLibrary {
     // http://employeelive.com/kwiqmall/API/public/getRestaurants
 
     private static String baseUrl = "https://a3dyou.com:9000/";
-    private static String session_key;
 
 
 
@@ -48,7 +48,18 @@ public class RetrofitLibrary {
     public static GitApiInterface getClient() {
 
 
-//        session_key = SharedPreferencesClass.getSession_key();
+
+      /*  if(SharedPreferencesClass.getSession_key()==null){
+            session_key = "c604464b-12ab-4654-9438-50e2787a1e58";
+
+        }
+        else
+        session_key = SharedPreferencesClass.getSession_key();
+*/
+
+       // c604464b-12ab-4654-9438-50e2787a1e58
+
+
 
         HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
         logging.setLevel(HttpLoggingInterceptor.Level.BODY);
@@ -82,62 +93,61 @@ public class RetrofitLibrary {
     public interface GitApiInterface {
 
 
+        String session_key = "c604464b-12ab-4654-9438-50e2787a1e58";
+
+
         //Create Session Api
         @GET("uuid")
         Call<CreateSessionRes> createSession();
 
 
-
-
         //Send images to server api's
         @Multipart
-        @POST("images/back?uuid={session_key}")
-        Call<LeftImageResponse> uploadleftImage(@Part("image\"; filename=\"pp.png\" ") RequestBody file);
-
-        //Call<LeftImageResponse> uploadleftImage(@Part MultipartBody.Part filePart);
+        @POST("images/left?")
+        Call<LeftImageResponse> uploadleftImage(@Part("image\"; filename=\"pp.png\" ") RequestBody file ,@Query("uuid") String key);
 
 
         @Multipart
-        @POST("images/right?uuid={session_key}")
-        Call<RightImageResponse> uploadrightImage(@Part("image\"; filename=\"pp.png\" ") RequestBody file);
+        @POST("images/right?")
+        Call<RightImageResponse> uploadrightImage(@Part("image\"; filename=\"pp.png\" ") RequestBody file,@Query("uuid") String key);
 
         @Multipart
-        @POST("images/front?uuid={session_key}")
-        Call<FrontImageResponse> uploadfrontImage(@Part("image\"; filename=\"pp.png\" ") RequestBody file);
+        @POST("images/front?")
+        Call<FrontImageResponse> uploadfrontImage(@Part("image\"; filename=\"pp.png\" ") RequestBody file,@Query("uuid") String key);
 
         @Multipart
-        @POST("images/back?uuid={session_key}")
-        Call<BackImageResponse> uploadbackImage(@Part("image\"; filename=\"pp.png\" ") RequestBody file);
+        @POST("images/back?")
+        Call<BackImageResponse> uploadbackImage(@Part("image\"; filename=\"pp.png\" ") RequestBody file,@Query("uuid") String key);
 
 
 
         //Configuration Api's
-        @POST("configuration/left?uuid={session_key}")
-        Call<LeftImageConfigRes> leftImageConfig(@Body JSONObject jsonObject);
+        @POST("configuration/left?")
+        Call<LeftImageConfigRes> leftImageConfig(@Body JSONObject jsonObject,@Query("uuid") String key);
 
 
         //Configuration Api's
-        @POST("configuration/right?uuid={session_key}")
-        Call<RightImageConfigRes> rightImageConfig(@Body JSONObject jsonObject);
+        @POST("configuration/right?")
+        Call<RightImageConfigRes> rightImageConfig(@Body JSONObject jsonObject,@Query("uuid") String key);
 
         //Configuration Api's
-        @POST("configuration/front?uuid={session_key}")
-        Call<FrontImageConfigRes> frontImageConfig(@Body JSONObject jsonObject);
+        @POST("configuration/front?")
+        Call<FrontImageConfigRes> frontImageConfig(@Body JSONObject jsonObject,@Query("uuid") String key);
 
         //Configuration Api's
-        @POST("configuration/back?uuid={session_key}")
-        Call<BackImageConfigRes> backImageConfig(@Body JSONObject jsonObject);
+        @POST("configuration/back?")
+        Call<BackImageConfigRes> backImageConfig(@Body JSONObject jsonObject,@Query("uuid") String key);
 
 
 
        // https://a3dyou.com:9000/configuration?uuid=session_key&gender=male&height=200
-        @POST("configuration?uuid={session_key}&gender=female&height=400")
-        Call<ConfigGenderHeight> genderHeight();
+        @POST("configuration?")
+        Call<ConfigGenderHeight> genderHeight(@Query("uuid") String key,@Query("gender") String gender,@Query("height") String height);
 
 
         //Delete session api
-        @DELETE("uuid?uuid={session_key}")
-        Call<DeleteSessionRes> deleteSession();
+        @DELETE("uuid?")
+        Call<DeleteSessionRes> deleteSession(@Query("uuid") String key);
 
 
 

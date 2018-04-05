@@ -15,6 +15,7 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Toast;
 
+import com.dmitrybrant.Utility;
 import com.dmitrybrant.modelviewer.R;
 import com.dmitrybrant.sharedPreferecnes.SharedPreferencesClass;
 
@@ -25,17 +26,19 @@ public class PreviewActivity extends Activity implements SurfaceHolder.Callback,
     SurfaceView mPreview;
     String EXTRA_CAMERA_DATA = "camera_data";
 
+
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera2);
-
         mPreview = (SurfaceView)findViewById(R.id.preview);
         mPreview.getHolder().addCallback(this);
         mPreview.getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 
         mCamera = Camera.open();
 
+        new Utility(this).createSession1();
 
 
     }

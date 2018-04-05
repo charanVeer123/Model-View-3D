@@ -32,7 +32,7 @@ class LoginActivity_1 : AppCompatActivity() {
 
     var isCheckedRadio: Boolean = true
     val CAMERA_PERMISSION_REQUEST_CODE = 3
-    val restClient = RetrofitLibrary.getClient()
+    //val restClient = RetrofitLibrary.getClient()
 
     //internal lateinit var utility: Utility
 
@@ -50,8 +50,7 @@ class LoginActivity_1 : AppCompatActivity() {
         setContentView(R.layout.activity_login_main)
 
 
-      //  Utility.createSession1()
-
+        Utility(this).createSession1()
 
 
         edPassword.setOnEditorActionListener({ textView, i, keyEvent ->
