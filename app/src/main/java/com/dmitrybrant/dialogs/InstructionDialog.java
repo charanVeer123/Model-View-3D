@@ -47,7 +47,6 @@ public class InstructionDialog extends Dialog{
 
                 if(checkboxAccept.isChecked()) {
 
-                    getContext().startActivity(new Intent(getContext(), ImagesGridActivity_3.class));
                     dismiss();
 
                 }

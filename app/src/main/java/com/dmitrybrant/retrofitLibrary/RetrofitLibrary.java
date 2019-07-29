@@ -1,26 +1,26 @@
 package com.dmitrybrant.retrofitLibrary;
 
 import com.dmitrybrant.Utility;
+import com.dmitrybrant.response.sessionResponse.CreateSessionRes;
 import com.dmitrybrant.response.sessionResponse.DeleteSessionRes;
 import com.dmitrybrant.response.uploadImagesConfigRes.BackImageConfigRes;
+import com.dmitrybrant.response.uploadImagesConfigRes.ConfigGenderHeight;
 import com.dmitrybrant.response.uploadImagesConfigRes.FrontImageConfigRes;
+import com.dmitrybrant.response.uploadImagesConfigRes.LeftImageConfigRes;
 import com.dmitrybrant.response.uploadImagesConfigRes.RightImageConfigRes;
 import com.dmitrybrant.response.uploadImagesServerRes.BackImageResponse;
-import com.dmitrybrant.response.uploadImagesConfigRes.ConfigGenderHeight;
 import com.dmitrybrant.response.uploadImagesServerRes.FrontImageResponse;
-import com.dmitrybrant.response.uploadImagesConfigRes.LeftImageConfigRes;
 import com.dmitrybrant.response.uploadImagesServerRes.LeftImageResponse;
 import com.dmitrybrant.response.uploadImagesServerRes.RightImageResponse;
-import com.dmitrybrant.response.sessionResponse.CreateSessionRes;
-import com.dmitrybrant.sharedPreferecnes.SharedPreferencesClass;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
+import com.orhanobut.hawk.Hawk;
 
 import org.json.JSONObject;
 
 import okhttp3.OkHttpClient;
 import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Call;
 import retrofit2.Retrofit;
@@ -57,7 +57,7 @@ public class RetrofitLibrary {
         session_key = SharedPreferencesClass.getSession_key();
 */
 
-       // c604464b-12ab-4654-9438-50e2787a1e58
+        // c604464b-12ab-4654-9438-50e2787a1e58
 
 
 
@@ -86,68 +86,70 @@ public class RetrofitLibrary {
 
         return gitApiInterface;
 
-
-
     }
 
     public interface GitApiInterface {
 
 
-        String session_key = "c604464b-12ab-4654-9438-50e2787a1e58";
+
+
+//        String session_key = "c604464b-12ab-4654-9438-50e2787a1e58";
+
+        String session_key = Hawk.get("session_key","noapikey");
+
+
+
 
 
         //Create Session Api
         @GET("uuid")
-        Call<CreateSessionRes> createSession();
-
+        Call<String> createSession();
 
         //Send images to server api's
         @Multipart
         @POST("images/left?")
-        Call<LeftImageResponse> uploadleftImage(@Part("image\"; filename=\"pp.png\" ") RequestBody file ,@Query("uuid") String key);
+        Call<String> uploadleftImage(@Part("image\"; filename=\"pp.png\" ") RequestBody file ,@Query("uuid") String key);
 
 
         @Multipart
         @POST("images/right?")
-        Call<RightImageResponse> uploadrightImage(@Part("image\"; filename=\"pp.png\" ") RequestBody file,@Query("uuid") String key);
+        Call<String> uploadrightImage(@Part("image\"; filename=\"pp.png\" ") RequestBody file,@Query("uuid") String key);
 
         @Multipart
         @POST("images/front?")
-        Call<FrontImageResponse> uploadfrontImage(@Part("image\"; filename=\"pp.png\" ") RequestBody file,@Query("uuid") String key);
+        Call<String> uploadfrontImage(@Part("image\"; filename=\"pp.png\" ") RequestBody file,@Query("uuid") String key);
 
         @Multipart
         @POST("images/back?")
-        Call<BackImageResponse> uploadbackImage(@Part("image\"; filename=\"pp.png\" ") RequestBody file,@Query("uuid") String key);
-
-
+        Call<String> uploadbackImage(@Part("image\"; filename=\"pp.png\" ") RequestBody file,@Query("uuid") String key);
 
         //Configuration Api's
         @POST("configuration/left?")
-        Call<LeftImageConfigRes> leftImageConfig(@Body JSONObject jsonObject,@Query("uuid") String key);
+        Call<String> leftImageConfig(@Body JSONObject jsonObject,@Query("uuid") String key);
 
 
         //Configuration Api's
         @POST("configuration/right?")
-        Call<RightImageConfigRes> rightImageConfig(@Body JSONObject jsonObject,@Query("uuid") String key);
+        Call<String> rightImageConfig(@Body JSONObject jsonObject,@Query("uuid") String key);
 
         //Configuration Api's
         @POST("configuration/front?")
-        Call<FrontImageConfigRes> frontImageConfig(@Body JSONObject jsonObject,@Query("uuid") String key);
+        Call<String> frontImageConfig(@Body JSONObject jsonObject,@Query("uuid") String key);
 
         //Configuration Api's
         @POST("configuration/back?")
-        Call<BackImageConfigRes> backImageConfig(@Body JSONObject jsonObject,@Query("uuid") String key);
+        Call<String> backImageConfig(@Body JSONObject jsonObject,@Query("uuid") String key);
 
 
 
-       // https://a3dyou.com:9000/configuration?uuid=session_key&gender=male&height=200
+        // https://a3dyou.com:9000/configuration?uuid=session_key&gender=male&height=200
         @POST("configuration?")
-        Call<ConfigGenderHeight> genderHeight(@Query("uuid") String key,@Query("gender") String gender,@Query("height") String height);
+        Call<String> genderHeight(@Query("uuid") String key,@Query("gender") String gender,@Query("height") String height);
 
 
         //Delete session api
         @DELETE("uuid?")
-        Call<DeleteSessionRes> deleteSession(@Query("uuid") String key);
+        Call<String> deleteSession(@Query("uuid") String key);
 
 
 

@@ -17,7 +17,9 @@ import android.widget.Toast;
 
 import com.dmitrybrant.Utility;
 import com.dmitrybrant.modelviewer.R;
-import com.dmitrybrant.sharedPreferecnes.SharedPreferencesClass;
+import com.orhanobut.hawk.Hawk;
+
+import static android.content.ContentValues.TAG;
 
 
 public class PreviewActivity extends Activity implements SurfaceHolder.Callback, Camera.ShutterCallback, Camera.PictureCallback {
@@ -25,6 +27,7 @@ public class PreviewActivity extends Activity implements SurfaceHolder.Callback,
     Camera mCamera;
     SurfaceView mPreview;
     String EXTRA_CAMERA_DATA = "camera_data";
+
 
 
 
@@ -38,10 +41,29 @@ public class PreviewActivity extends Activity implements SurfaceHolder.Callback,
 
         mCamera = Camera.open();
 
-        new Utility(this).createSession1();
+
+        if(Hawk.get("session_key")==null){
+
+        }
+
+    }
+
+
+    private void setIntentData(){
+
+        if(getIntent()!=null){
+
+            if(getIntent().hasExtra("camera_data")){
+
+
+
+            }
+
+        }
 
 
     }
+
 
     @Override
     public void onPause() {

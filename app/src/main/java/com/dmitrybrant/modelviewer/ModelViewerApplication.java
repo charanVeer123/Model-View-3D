@@ -6,6 +6,8 @@ import android.support.annotation.Nullable;
 import android.support.multidex.MultiDex;
 import android.support.v7.app.AppCompatDelegate;
 
+import com.orhanobut.hawk.Hawk;
+
 import uk.co.chrisjenx.calligraphy.CalligraphyConfig;
 
 /*
@@ -51,6 +53,7 @@ public class ModelViewerApplication extends Application
         super.onCreate();
         INSTANCE = this;
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
+        Hawk.init(getApplicationContext()).build();
 
         CalligraphyConfig.initDefault(new CalligraphyConfig.Builder()
                 .setDefaultFontPath("fonts/regular.ttf")

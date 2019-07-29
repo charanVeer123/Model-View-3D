@@ -1,6 +1,7 @@
 package com.dmitrybrant.modelviewer;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -8,28 +9,25 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContentResolverCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.text.TextUtils;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.dmitrybrant.activities.ImagesGridActivity_3;
+import com.dmitrybrant.dialogs.InstructionDialog;
 import com.dmitrybrant.modelviewer.gvr.ModelGvrActivity;
-import com.dmitrybrant.modelviewer.obj.ObjModel;
 import com.dmitrybrant.modelviewer.ply.PlyModel;
-import com.dmitrybrant.modelviewer.stl.StlModel;
 import com.dmitrybrant.modelviewer.util.Util;
 
 import java.io.ByteArrayInputStream;
@@ -66,10 +64,11 @@ public class MainActivityPlyParser extends AppCompatActivity {
     @Nullable private ModelSurfaceView modelView;
     private ViewGroup containerView;
     private ProgressBar progressBar;
-
+    ProgressDialog progressDialog;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
 
         // Hide status bar
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -79,14 +78,19 @@ public class MainActivityPlyParser extends AppCompatActivity {
 
         containerView = findViewById(R.id.container_view);
         progressBar = findViewById(R.id.model_progress_bar);
-        progressBar.setVisibility(View.GONE);
+        progressBar.setVisibility(View.VISIBLE);
 
 
         if (getIntent().getData() != null && savedInstanceState == null) {
             beginLoadModel(getIntent().getData());
         }
-
-        loadSampleModel();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                loadSampleModel();
+            }
+        }).start();
+        //loadSampleModel();
     }
 
     @Override
@@ -163,13 +167,20 @@ public class MainActivityPlyParser extends AppCompatActivity {
         new ModelLoadTask().execute(uri);
     }
 
-    private void createNewModelView(@Nullable Model model) {
-        if (modelView != null) {
-            containerView.removeView(modelView);
-        }
-        ModelViewerApplication.getInstance().setCurrentModel(model);
-        modelView = new ModelSurfaceView(this, model);
-        containerView.addView(modelView, 0);
+    private void createNewModelView(@Nullable final Model model) {
+        Runnable runnable = new Runnable() {
+            public void run() {
+                if (modelView != null) {
+                    containerView.removeView(modelView);
+                }
+                ModelViewerApplication.getInstance().setCurrentModel(model);
+                modelView = new ModelSurfaceView(MainActivityPlyParser.this, model);
+                containerView.addView(modelView, 0);
+            }
+        };
+
+
+        runOnUiThread(runnable);
     }
 
     private class ModelLoadTask extends AsyncTask<Uri, Integer, Model> {
@@ -251,11 +262,16 @@ public class MainActivityPlyParser extends AppCompatActivity {
         }
     }
 
-    private void setCurrentModel(@NonNull Model model) {
+    private void setCurrentModel(@NonNull final Model model) {
         createNewModelView(model);
-     //   Toast.makeText(getApplicationContext(), R.string.open_model_success, Toast.LENGTH_SHORT).show();
-        setTitle(model.getTitle());
-        progressBar.setVisibility(View.GONE);
+        //   Toast.makeText(getApplicationContext(), R.string.open_model_success, Toast.LENGTH_SHORT).show();
+        Runnable runnable = new Runnable() {
+            public void run() {
+                setTitle(model.getTitle());
+                progressBar.setVisibility(View.GONE);
+            }
+        };
+        runOnUiThread(runnable);
     }
 
     private void startVrActivity() {
@@ -270,15 +286,48 @@ public class MainActivityPlyParser extends AppCompatActivity {
         try {
             //InputStream stream = getApplicationContext().getAssets().open(SAMPLE_MODELS[sampleModelIndex++ % SAMPLE_MODELS.length]);
             InputStream stream = getApplicationContext().getAssets().open("girl.ply");
-
+            Log.i("","");
+//            Toast.makeText(app, "start", Toast.LENGTH_SHORT).show();
             setCurrentModel(new PlyModel(MainActivityPlyParser.this,stream));
 
-            stream.close();
+           // Toast.makeText(app, "down", Toast.LENGTH_SHORT).show();
+            Log.i("","");
 
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    progressBar.setVisibility(View.GONE);
+                }
+            });
+            stream.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
 
+        ModelViewerApplication.getInstance().setCurrentModel(null);
+        modelView = new ModelSurfaceView(MainActivityPlyParser.this, null);
+        containerView.addView(modelView, 0);
+
+    }
+
+
+    public  void showPop(View view)
+    {
+
+        ModelViewerApplication.getInstance().setCurrentModel(null);
+        modelView = new ModelSurfaceView(MainActivityPlyParser.this, null);
+        containerView.addView(modelView, 0);
+        finish();
+       Intent intent = new Intent(getApplicationContext(), ImagesGridActivity_3.class);
+       intent.putExtra("dia","show");
+       startActivity(intent);
+
+
+
+    }
 }

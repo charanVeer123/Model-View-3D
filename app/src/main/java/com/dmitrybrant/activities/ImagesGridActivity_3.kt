@@ -1,12 +1,12 @@
 package com.dmitrybrant.activities
 
+
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
-import android.graphics.drawable.BitmapDrawable
 import android.hardware.Sensor
 import android.hardware.SensorManager
 import android.hardware.camera2.CameraCharacteristics
@@ -17,7 +17,6 @@ import android.os.Bundle
 import android.os.Environment
 import android.os.Handler
 import android.provider.MediaStore
-import android.support.annotation.NonNull
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.*
@@ -25,19 +24,15 @@ import android.widget.BaseAdapter
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import com.afollestad.bridge.Bridge
+import com.afollestad.materialdialogs.MaterialDialog
 import com.dmitrybrant.Utility
-import com.dmitrybrant.retrofitLibrary.RetrofitLibrary
+import com.dmitrybrant.dialogs.InstructionDialog
 import com.dmitrybrant.models.ImagesModel
-import com.dmitrybrant.modelviewer.MainActivityPlyParser
 import com.dmitrybrant.modelviewer.R
-import com.dmitrybrant.response.uploadImagesConfigRes.BackImageConfigRes
-import com.dmitrybrant.response.uploadImagesConfigRes.FrontImageConfigRes
-import com.dmitrybrant.response.uploadImagesConfigRes.LeftImageConfigRes
-import com.dmitrybrant.response.uploadImagesConfigRes.RightImageConfigRes
-import com.dmitrybrant.response.uploadImagesServerRes.BackImageResponse
-import com.dmitrybrant.response.uploadImagesServerRes.FrontImageResponse
-import com.dmitrybrant.response.uploadImagesServerRes.LeftImageResponse
-import com.dmitrybrant.response.uploadImagesServerRes.RightImageResponse
+import com.dmitrybrant.retrofitLibrary.RetrofitLibrary
+import com.orhanobut.hawk.Hawk
+import com.sdsmdg.tastytoast.TastyToast
 import dmax.dialog.SpotsDialog
 import kotlinx.android.synthetic.main.activity_captured_images.*
 import kotlinx.android.synthetic.main.grid_item_layout.view.*
@@ -46,6 +41,7 @@ import okhttp3.RequestBody
 import org.json.JSONException
 import org.json.JSONObject
 import retrofit2.Call
+import retrofit2.Callback
 import retrofit2.Response
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -54,9 +50,7 @@ import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
 
-/**
- * Created by dharamveer on 28/3/18.
- */
+
 class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
     override fun onTouch(v: View?, event: MotionEvent?): Boolean {
@@ -84,8 +78,182 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
     private var txtCreate: TextView? = null
     var myPhotos = BooleanArray(4)
 
+    var hshmapfront = ArrayList<Integer>()
+    var hshmapright = ArrayList<Integer>()
+    var hshmapback = ArrayList<Integer>()
+    var hshmapleft = ArrayList<Integer>()
+
+    var hshmap = ArrayList<Integer>()
+
+    internal var height: String? = null
+    internal var gender: String? = null
+
+
+
+    fun deleteSession() {
+
+        Hawk.delete("session_key")
+
+
+        val restClient = RetrofitLibrary.getClient()
+
+        restClient.deleteSession(RetrofitLibrary.GitApiInterface.session_key).enqueue(object : Callback<String> {
+            override fun onResponse(call: Call<String>, response: Response<String>) {
+
+                if (response.code() == 200) {
+
+
+                    Log.d("delete session", "200 ok")
+
+                    Toast.makeText(applicationContext, "200 Ok", Toast.LENGTH_SHORT).show()
+                    if (response.isSuccessful) {
+                        Utility.sessionKey = null
+                    }
+
+                } else if (response.code() == 400) {
+                    Log.d("delete session", "400 Bad Request (no 'uuid' query)")
+                    Toast.makeText(applicationContext, "400 Bad Request (no 'uuid' query)", Toast.LENGTH_SHORT).show()
+
+                } else if (response.code() == 404) {
+                    Log.d("delete session", "404 Not Found")
+                    Toast.makeText(applicationContext, "404 Not Found", Toast.LENGTH_SHORT).show()
+
+                } else if (response.code() == 500) {
+                    Log.d("delete session", "500 Internal Server Error")
+                    Toast.makeText(applicationContext, "500 Internal Server Error", Toast.LENGTH_SHORT).show()
+
+                }
+
+
+            }
+
+            override fun onFailure(call: Call<String>, t: Throwable) {
+
+                try {
+                    Log.d("failure delete session", t.message)
+                    Toast.makeText(applicationContext, t.message, Toast.LENGTH_SHORT).show()
+                } finally {
+                    Toast.makeText(applicationContext, "Unknown failure", Toast.LENGTH_SHORT).show()
+
+                }
+
+
+            }
+        })
+
+    }
+
+    fun createSession1() {
+
+        val restClient = RetrofitLibrary.getClient()
+
+        restClient.createSession().enqueue(object : Callback<String> {
+            override fun onResponse(call: Call<String>, response: Response<String>) {
+
+                val dialog = MaterialDialog.Builder(this@ImagesGridActivity_3)
+                        .customView(R.layout.responsedialog, false)
+                        .show()
+
+                dialog.setCancelable(true)
+
+//
+                val tvrequest = dialog.customView!!.findViewById<View>(R.id.tvrequest) as? TextView
+//
+                val tvresponse = dialog.customView!!.findViewById<View>(R.id.tvresponse) as? TextView
+
+                val tvParameter = dialog.customView!!.findViewById<View>(R.id.tvrequestparameter) as? TextView
+
+                tvrequest?.setText(response.raw().request().url().toString())
+
+                tvresponse?.setText(response.toString())
+
+
+                tvParameter?.setText("No parameter")
+
+                if (response.code() == 201) {
+
+                    Log.d("create session", "201 OK (_uuid_ is response body)")
+                    uploadImages()
+
+
+                    Toast.makeText(applicationContext,"201 Ok",Toast.LENGTH_SHORT).show()
+                    if (response.isSuccessful) {
+
+                        //                        sharedPreferencesClass.setSession_key(response.body().toString());
+                        Utility.sessionKey = response.body()!!.toString()
+                        Hawk.put("session_key", Utility.sessionKey)
+                        Toast.makeText(applicationContext,"sessio key "+ Utility.sessionKey,Toast.LENGTH_SHORT).show()
+                    }
+
+                } else if (response.code() == 500) {
+                    Log.d("create session", "500 Internal Server Error")
+                    Toast.makeText(applicationContext,"500 Internal Server Error",Toast.LENGTH_SHORT).show()
+                    //sharedPreferencesClass.setSession_key("123456");
+                    //sessionKey = "123456"
+                } else if (response.code() == 503) {
+                    Log.d("create session", "503 Service Unavailable (if any session has already created and used)")
+                    //                    sharedPreferencesClass.setSession_key("123456");
+                    Toast.makeText(applicationContext,"503 Service Unavailable",Toast.LENGTH_SHORT).show()
+
+                    // sessionKey = "123456"
+                } else {
+                    //                    sharedPreferencesClass.setSession_key("123456");
+                    Toast.makeText(applicationContext,"Unknown error",Toast.LENGTH_SHORT).show()
+
+                    // sessionKey = "123456"
+                }
+
+            }
+
+            override fun onFailure(call: Call<String>, t: Throwable) {
+                try {
+                    Log.d("failure delete session", t.message)
+                    Toast.makeText(applicationContext,t.message,Toast.LENGTH_SHORT).show()
+                } finally {
+                    Toast.makeText(applicationContext,"Unknown failure",Toast.LENGTH_SHORT).show()
+
+                }
+                // sessionKey = "123456"
+
+            }
+        })
+
+    }
+
+    private fun uploadImages() {
+
+        genderHeightBack()
+
+        getJsonObjectFront()
+        getJsonObjectbackImage()
+        getJsonObjectleftImage()
+        getJsonObjectrightImage()
+
+
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (intent != null) {
+            if (intent.hasExtra("dia")) {
+                val instructionDialog = InstructionDialog(this@ImagesGridActivity_3)
+                instructionDialog.show()
+
+            }
+
+            if(intent.hasExtra("h"))
+            {
+
+                height = intent.getStringExtra("h")
+            }
+
+            if(intent.hasExtra("g"))
+            {
+                gender = intent.getStringExtra("g");
+            }
+
+        }
 
         //Remove title bar
         this.requestWindowFeature(Window.FEATURE_NO_TITLE)
@@ -102,15 +270,24 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
         txtCreate!!.setOnClickListener{
 
-            dialog.show()
+          //  dialog.show()
 
             val mHandler = Handler()
             mHandler.postDelayed(Runnable {
-                //start your activity here
 
-                val intent = Intent(this, MainActivityPlyParser::class.java)
-                startActivity(intent)
-                dialog.dismiss()
+
+                createSession1()
+                //start your activity here
+//                deleteSession()
+//                finish()
+//                val intent = Intent(this, MainActivityPlyParser::class.java)
+//                startActivity(intent)
+//                dialog.dismiss()
+
+
+
+
+
 
             }, 1000L)
 
@@ -119,12 +296,17 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
         }
 
 
+
+
         // load items
 
         imagesList.add(ImagesModel("Front View", R.drawable.front))
-        imagesList.add(ImagesModel("Back View", R.drawable.back))
-        imagesList.add(ImagesModel("Left View ", R.drawable.left))
-        imagesList.add(ImagesModel("Right View",R.drawable.right))
+        imagesList.add(ImagesModel("Right View", R.drawable.right))
+        imagesList.add(ImagesModel("Back View ", R.drawable.back))
+        imagesList.add(ImagesModel("Left View",R.drawable.left))
+
+
+
 
 
 
@@ -134,20 +316,18 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
                 imageViewGl  = imageView
 
-
                 if(position==0){
                     startImageCapture(TAKE_PICTURE_REQUEST_FRONT)
 
                 }else if(position==1){
+                    startImageCapture(TAKE_PICTURE_REQUEST_RIGHT)
+                }
+                else if(position==2){
                     startImageCapture(TAKE_PICTURE_REQUEST_BACK)
 
                 }
-                else if(position==2){
-                    startImageCapture(TAKE_PICTURE_REQUEST_LEFT)
-
-                }
                 else if(position==3){
-                    startImageCapture(TAKE_PICTURE_REQUEST_RIGHT)
+                    startImageCapture(TAKE_PICTURE_REQUEST_LEFT)
 
                 }
 
@@ -157,29 +337,31 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
         gridCapture.adapter = adapter
 
+
+
     }
 
 
+
+    private fun setIntentData(){
+
+
+
+    }
 
 
 
     private fun startImageCapture( requestCode: Int) {
 
 
-        if(myPhotos[requestCode]){
-
-            Utility(this).deleteSession()
-            Log.d("Front Photo is exist","delete session called")
-
-        }
-        else
-        {
-            startActivityForResult(Intent(this@ImagesGridActivity_3, CameraActivity::class.java),requestCode)
-
-        }
+        val intent = Intent(this@ImagesGridActivity_3,AndroidSurfaceviewExample::class.java);
 
 
+        if(requestCode == TAKE_PICTURE_REQUEST_BACK)
+            intent.putExtra("type","back")
 
+
+        startActivityForResult(intent,requestCode)
 
     }
 
@@ -201,10 +383,19 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
 
+        if (data != null) {
+
+        }
+
         //For front image
         if(requestCode == TAKE_PICTURE_REQUEST_FRONT){
 
             if (resultCode == Activity.RESULT_OK) {
+
+                hshmapfront = data?.getSerializableExtra("hashmap") as ArrayList<Integer>
+
+                imageViewGl!!.rotation= 90F
+
 
 
                 if (mCameraBitmap != null && !mCameraBitmap!!.isRecycled()) {
@@ -213,33 +404,23 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
                 }
 
                 val extras = data?.extras
+
                 val cameraData = extras!!.getByteArray(CameraActivity.EXTRA_CAMERA_DATA)
 
-                if (cameraData != null) {
+                if (true) {
 
-                    mCameraBitmap = BitmapFactory.decodeByteArray(cameraData, 0, cameraData.size)
+                    var finalFile = data.getStringExtra("file");
 
-                    // val photo: Bitmap// this is your image.
-                    val stream = ByteArrayOutputStream()
-                    mCameraBitmap!!.compress(Bitmap.CompressFormat.PNG, 100, stream)
-
-                    //creating request body for file
-
-                    // CALL THIS METHOD TO GET THE URI FROM THE BITMAP
-                    mCapturedImageURI = getImageUri(applicationContext, mCameraBitmap!!)
-
-                    // CALL THIS METHOD TO GET THE ACTUAL PATH
-                    val finalFile = File(getRealPathFromURI(mCapturedImageURI!!))
+                    val  bitMap = BitmapFactory.decodeFile(finalFile)
 
 
-                    //val requestFile = RequestBody.create(MediaType.parse(contentResolver.getType(mCapturedImageURI)!!), finalFile)
                     val requestFile = RequestBody.create(MediaType.parse("image/*"), finalFile)
 
 
                     //Api for front image
-                    restClient.uploadfrontImage(requestFile,RetrofitLibrary.GitApiInterface.session_key).enqueue(object : retrofit2.Callback<FrontImageResponse> {
+                    restClient.uploadfrontImage(requestFile,RetrofitLibrary.GitApiInterface.session_key).enqueue(object : retrofit2.Callback<String> {
 
-                        override fun onResponse(call: Call<FrontImageResponse>, response: Response<FrontImageResponse>) {
+                        override fun onResponse(call: Call<String>, response: Response<String>) {
 
                             if (response.code() == 201) run {
 
@@ -275,28 +456,29 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
                         }
 
 
-                        override fun onFailure(call: Call<FrontImageResponse>?, t: Throwable?) {
+                        override fun onFailure(call: Call<String>?, t: Throwable?) {
                             Toast.makeText(this@ImagesGridActivity_3, t.toString(), Toast.LENGTH_SHORT).show()
                         }
 
                     })
 
 
-                    getJsonObjectFront()
-
-
-                    imageViewGl!!.setImageBitmap(RotateBitmap(mCameraBitmap!!,90f))
-//                    myPhotos[resultCode]=true
+//                    genderHeightFront()
+//                    getJsonObjectFront()
 
 
 
-                    mCameraBitmap!!.byteCount;
+
+                    imageViewGl!!.setScaleType(ImageView.ScaleType.FIT_XY);
+                    imageViewGl!!.setImageBitmap(bitMap)
 
 
 
+//                    mCameraBitmap!!.byteCount;
 
 
                     val saveFile = openFileForImage()
+
                     if (saveFile != null) {
                         saveImageToFile(saveFile)
                     } else {
@@ -304,13 +486,7 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
                                 Toast.LENGTH_LONG).show()
                     }
 
-
-
                     imageViewGl!!.setOnTouchListener(this)
-
-
-
-
 
                 }
             }
@@ -326,42 +502,47 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
         else if(requestCode == TAKE_PICTURE_REQUEST_BACK){
 
             if (resultCode == Activity.RESULT_OK) {
+                imageViewGl!!.rotation= 90F
 
                 if (mCameraBitmap != null && !mCameraBitmap!!.isRecycled()) {
                     // mCameraBitmap!!.recycle();
                     mCameraBitmap = null;
                 }
 
-                val extras = data?.extras
-                val cameraData = extras!!.getByteArray(CameraActivity.EXTRA_CAMERA_DATA)
+//                val extras = data?.extras
+//                val cameraData = extras!!.getByteArray(CameraActivity.EXTRA_CAMERA_DATA)
 
-                if (cameraData != null) {
+                if (true) {
+                    hshmapback = data?.getSerializableExtra("hashmap") as ArrayList<Integer>
 
+                    var finalFile = data?.getStringExtra("file");
 
-                    mCameraBitmap = BitmapFactory.decodeByteArray(cameraData, 0, cameraData.size)
-
-                    // val photo: Bitmap// this is your image.
-                    val stream = ByteArrayOutputStream()
-                    mCameraBitmap!!.compress(Bitmap.CompressFormat.PNG, 100, stream)
-
-
-
-                    //creating request body for file
-
-                    // CALL THIS METHOD TO GET THE URI FROM THE BITMAP
-                    mCapturedImageURI = getImageUri(applicationContext, mCameraBitmap!!)
-
-                    // CALL THIS METHOD TO GET THE ACTUAL PATH
-                    val finalFile = File(getRealPathFromURI(mCapturedImageURI!!))
+                    val  bitMap = BitmapFactory.decodeFile(finalFile)
+//                    mCameraBitmap = BitmapFactory.decodeByteArray(cameraData, 0, cameraData.size)
+//
+//                    // val photo: Bitmap// this is your image.
+//                    val stream = ByteArrayOutputStream()
+//                    mCameraBitmap!!.compress(Bitmap.CompressFormat.PNG, 100, stream)
+//
+//
+//
+//                    //creating request body for file
+//
+//                    // CALL THIS METHOD TO GET THE URI FROM THE BITMAP
+//                    mCapturedImageURI = getImageUri(applicationContext, mCameraBitmap!!)
+//
+//                    // CALL THIS METHOD TO GET THE ACTUAL PATH
+//                    val finalFile = File(getRealPathFromURI(mCapturedImageURI!!))
 
 
                     // val requestFile = RequestBody.create(MediaType.parse(contentResolver.getType(mCapturedImageURI)!!), finalFile)
+
                     val requestFile = RequestBody.create(MediaType.parse("image/*"), finalFile)
 
 
                     //Api for back image
-                    restClient.uploadbackImage(requestFile,RetrofitLibrary.GitApiInterface.session_key).enqueue(object : retrofit2.Callback<BackImageResponse> {
-                        override fun onResponse(call: Call<BackImageResponse>, response: Response<BackImageResponse>) {
+                    restClient.uploadbackImage(requestFile,RetrofitLibrary.GitApiInterface.session_key).enqueue(object : retrofit2.Callback<String> {
+                        override fun onResponse(call: Call<String>, response: Response<String>) {
                             if (response.code() == 201) run {
 
                                 if (response.isSuccessful)
@@ -393,20 +574,22 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
                         }
 
-                        override fun onFailure(call: Call<BackImageResponse>?, t: Throwable?) {
+                        override fun onFailure(call: Call<String>?, t: Throwable?) {
                             Toast.makeText(this@ImagesGridActivity_3, t.toString(), Toast.LENGTH_SHORT).show()
                         }
 
                     })
 
 
-                    getJsonObjectbackImage()
+//                    genderHeightBack()
+//                    getJsonObjectbackImage()
 
-                    imageViewGl!!.setImageBitmap(RotateBitmap(mCameraBitmap!!,90f))
+
+                    imageViewGl!!.setScaleType(ImageView.ScaleType.FIT_XY);
+                    imageViewGl!!.setImageBitmap(bitMap)
+
 //                    myPhotos[1]=true;
-
-
-                    mCameraBitmap!!.byteCount;
+//                    mCameraBitmap!!.byteCount;
 
 
 
@@ -436,9 +619,10 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
         //For left image
         else if (requestCode == TAKE_PICTURE_REQUEST_LEFT) {
+
             if (resultCode == Activity.RESULT_OK) {
                 // Recycle the previous bitmap.
-
+                imageViewGl!!.rotation= 90F
 
 
                 if (mCameraBitmap != null && !mCameraBitmap!!.isRecycled()) {
@@ -446,26 +630,30 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
                     mCameraBitmap = null;
                 }
 
+//
+//                val extras = data?.extras
+//                val cameraData = extras!!.getByteArray(CameraActivity.EXTRA_CAMERA_DATA)
 
-                val extras = data?.extras
-                val cameraData = extras!!.getByteArray(CameraActivity.EXTRA_CAMERA_DATA)
+                if (true) {
 
-                if (cameraData != null) {
-                    mCameraBitmap = BitmapFactory.decodeByteArray(cameraData, 0, cameraData.size)
+//                    mCameraBitmap = BitmapFactory.decodeByteArray(cameraData, 0, cameraData.size)
+                    hshmapleft = data?.getSerializableExtra("hashmap") as ArrayList<Integer>
+                    var finalFile = data?.getStringExtra("file");
 
-                    // val photo: Bitmap// this is your image.
-                    val stream = ByteArrayOutputStream()
-                    mCameraBitmap!!.compress(Bitmap.CompressFormat.PNG, 100, stream)
-
-
-
-                    //creating request body for file
-
-                    // CALL THIS METHOD TO GET THE URI FROM THE BITMAP
-                    mCapturedImageURI = getImageUri(applicationContext, mCameraBitmap!!)
+                    val  bitMap = BitmapFactory.decodeFile(finalFile)
+//                    // val photo: Bitmap// this is your image.
+//                    val stream = ByteArrayOutputStream()
+//                    mCameraBitmap!!.compress(Bitmap.CompressFormat.PNG, 100, stream)
+//
+//
+//
+//                    //creating request body for file
+//
+//                    // CALL THIS METHOD TO GET THE URI FROM THE BITMAP
+//                    mCapturedImageURI = getImageUri(applicationContext, mCameraBitmap!!)
 
                     // CALL THIS METHOD TO GET THE ACTUAL PATH
-                    val finalFile = File(getRealPathFromURI(mCapturedImageURI!!))
+//                    val finalFile = File(getRealPathFromURI(mCapturedImageURI!!))
 
 
                     // val requestFile = RequestBody.create(MediaType.parse(contentResolver.getType(mCapturedImageURI)!!), finalFile)
@@ -476,8 +664,8 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
                     //java.io.EOFException: End of input at line 1 column 1
 
                     //Api for left image
-                    restClient.uploadleftImage(requestFile,RetrofitLibrary.GitApiInterface.session_key).enqueue(object : retrofit2.Callback<LeftImageResponse> {
-                        override fun onResponse(call: Call<LeftImageResponse>, response: Response<LeftImageResponse>) {
+                    restClient.uploadleftImage(requestFile,RetrofitLibrary.GitApiInterface.session_key).enqueue(object : retrofit2.Callback<String> {
+                        override fun onResponse(call: Call<String>, response: Response<String>) {
 
                             if (response.code() == 201) run {
 
@@ -509,20 +697,23 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
                             }
                         }
 
-                        override fun onFailure(call: Call<LeftImageResponse>, t: Throwable) {
+                        override fun onFailure(call: Call<String>, t: Throwable) {
                             Toast.makeText(this@ImagesGridActivity_3,t.toString(),Toast.LENGTH_SHORT).show()
 
                         }
                     })
 
-                    getJsonObjectleftImage()
+
+//                    genderHeightLeft()
+//                    getJsonObjectleftImage()
+
+                    imageViewGl!!.setScaleType(ImageView.ScaleType.FIT_XY);
+                    imageViewGl!!.setImageBitmap(bitMap)
 
 
-                    imageViewGl!!.setImageBitmap(RotateBitmap(mCameraBitmap!!,90f))
+//                    myPhotos[2]=true;
 
-                    myPhotos[2]=true;
-
-                    mCameraBitmap!!.byteCount;
+//                    mCameraBitmap!!.byteCount;
 
 
                     val saveFile = openFileForImage()
@@ -549,46 +740,51 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
         //For right image
         else if(requestCode == TAKE_PICTURE_REQUEST_RIGHT){
 
-            if (resultCode == Activity.RESULT_OK) {
 
+            if (resultCode == Activity.RESULT_OK) {
+                imageViewGl!!.rotation= 90F
                 if (mCameraBitmap != null && !mCameraBitmap!!.isRecycled()) {
                     // mCameraBitmap!!.recycle();
                     mCameraBitmap = null;
                 }
-
-                val extras = data?.extras
-                val cameraData = extras!!.getByteArray(CameraActivity.EXTRA_CAMERA_DATA)
-
-
-                if (cameraData != null) {
-
-                    mCameraBitmap = BitmapFactory.decodeByteArray(cameraData, 0, cameraData.size)
-
-                    // val photo: Bitmap// this is your image.
-                    val stream = ByteArrayOutputStream()
-                    mCameraBitmap!!.compress(Bitmap.CompressFormat.PNG, 100, stream)
+//
+//                val extras = data?.extras
+//                val cameraData = extras!!.getByteArray(CameraActivity.EXTRA_CAMERA_DATA)
 
 
+                if (true) {
+                    hshmapright = data?.getSerializableExtra("hashmap") as ArrayList<Integer>
+                    var finalFile = data?.getStringExtra("file");
 
-                    //creating request body for file
+                    val  bitMap = BitmapFactory.decodeFile(finalFile)
 
-                    // CALL THIS METHOD TO GET THE URI FROM THE BITMAP
-                    mCapturedImageURI = getImageUri(applicationContext, mCameraBitmap!!)
-
-                    // CALL THIS METHOD TO GET THE ACTUAL PATH
-                    val finalFile = File(getRealPathFromURI(mCapturedImageURI!!))
-
-
-                    //val requestFile = RequestBody.create(MediaType.parse(contentResolver.getType(mCapturedImageURI)!!), finalFile)
-
-
+//                    mCameraBitmap = BitmapFactory.decodeByteArray(cameraData, 0, cameraData.size)
+//
+//                    // val photo: Bitmap// this is your image.
+//                    val stream = ByteArrayOutputStream()
+//                    mCameraBitmap!!.compress(Bitmap.CompressFormat.PNG, 100, stream)
+//
+//
+//
+//                    //creating request body for file
+//
+//                    // CALL THIS METHOD TO GET THE URI FROM THE BITMAP
+//                    mCapturedImageURI = getImageUri(applicationContext, mCameraBitmap!!)
+//
+//                    // CALL THIS METHOD TO GET THE ACTUAL PATH
+//                    val finalFile = File(getRealPathFromURI(mCapturedImageURI!!))
+//
+//
+//                    //val requestFile = RequestBody.create(MediaType.parse(contentResolver.getType(mCapturedImageURI)!!), finalFile)
+//
+//
                     val requestFile = RequestBody.create(MediaType.parse("image/*"), finalFile)
 
 
                     //Api for right image
-                    restClient.uploadrightImage(requestFile,RetrofitLibrary.GitApiInterface.session_key).enqueue(object : retrofit2.Callback<RightImageResponse> {
+                    restClient.uploadrightImage(requestFile,RetrofitLibrary.GitApiInterface.session_key).enqueue(object : retrofit2.Callback<String> {
 
-                        override fun onResponse(call: Call<RightImageResponse>, response: Response<RightImageResponse>) {
+                        override fun onResponse(call: Call<String>, response: Response<String>) {
                             if (response.code() == 201) run {
 
                                 if (response.isSuccessful)
@@ -619,20 +815,24 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
                             }
                         }
 
-                        override fun onFailure(call: Call<RightImageResponse>?, t: Throwable?) {
+                        override fun onFailure(call: Call<String>?, t: Throwable?) {
                             Toast.makeText(this@ImagesGridActivity_3, t.toString(), Toast.LENGTH_SHORT).show()
                         }
 
 
                     })
 
-                    getJsonObjectrightImage()
+//                    genderHeightRight()
+//                    getJsonObjectrightImage()
 
-                    imageViewGl!!.setImageBitmap(RotateBitmap(mCameraBitmap!!,90f))
-                    myPhotos[3]=true;
+                    imageViewGl!!.setScaleType(ImageView.ScaleType.FIT_XY);
+                    imageViewGl!!.setImageBitmap(bitMap)
 
 
-                    mCameraBitmap!!.byteCount;
+//                    myPhotos[3]=true;
+
+
+//                    mCameraBitmap!!.byteCount;
 
 
 
@@ -663,10 +863,364 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
     }
 
+    private fun genderHeightRight() {
+        genderHeightFront()
+
+//        restClient.genderHeight(Utility.sessionKey,gender, height.toString()).enqueue(object : retrofit2.Callback<String>{
+//
+//
+//
+//            override fun onResponse(call: Call<String>, response: Response<String>) {
+//
+//                val dialog = MaterialDialog.Builder(this@ImagesGridActivity_3)
+//                        .customView(R.layout.responsedialog, false)
+//                        .show()
+//
+//                dialog.setCancelable(true)
+//
+////
+//                val tvrequest = dialog.customView!!.findViewById<View>(R.id.tvrequest) as? TextView
+////
+//                val tvresponse = dialog.customView!!.findViewById<View>(R.id.tvresponse) as? TextView
+//
+//                val tvParameter = dialog.customView!!.findViewById<View>(R.id.tvrequestparameter) as? TextView
+//
+//                tvrequest?.setText(response.raw().request().url().toString())
+//
+//                tvresponse?.setText(response.toString())
+//
+//
+//                tvParameter?.setText("No request parameter only header")
+//
+//
+//
+//
+//
+//                if (response.code() == 201) {
+//
+//                    Log.d("genderHeight", "201 OK (_uuid_ is response body)")
+//                    Toast.makeText(applicationContext,"201 Ok",Toast.LENGTH_SHORT).show()
+//                    if (response.isSuccessful) {
+//
+//
+//                        Toast.makeText(applicationContext,"sessio key "+ Utility.sessionKey,Toast.LENGTH_SHORT).show()
+//                    }
+//
+//                } else if (response.code() == 400) {
+//                    Log.d("genderHeight", "500 Internal Server Error")
+//                    Toast.makeText(applicationContext,"400 Bad Request (no 'uuid' or 'gender' or 'height' query or query parameter is wrong)",Toast.LENGTH_SHORT).show()
+//
+//                } else if (response.code() == 404) {
+//                    Log.d("genderHeight", "404 Not Found")
+//
+//                    Toast.makeText(applicationContext,"404 Not Found",Toast.LENGTH_SHORT).show()
+//
+//
+//                }
+//                else if (response.code() == 409) {
+//                    Log.d("genderHeight", "409 Conflict (json data has already loaded)")
+//
+//                    Toast.makeText(applicationContext,"409 Conflict (json data has already loaded)",Toast.LENGTH_SHORT).show()
+//
+//
+//                }
+//                else if (response.code() == 500) {
+//                    Log.d("genderHeight", "500 Internal Server Error")
+//
+//                    Toast.makeText(applicationContext,"500 Internal Server Error",Toast.LENGTH_SHORT).show()
+//
+//
+//                }
+//
+//
+//                else {
+//                    Toast.makeText(applicationContext,"Unknown error",Toast.LENGTH_SHORT).show()
+//
+//                }
+//
+//            }
+//
+//            override fun onFailure(call: Call<String>, t: Throwable) {
+//
+//                try {
+//                    Log.d("failure ", t.message)
+//                    Toast.makeText(applicationContext,t.message,Toast.LENGTH_SHORT).show()
+//                } finally {
+//                    Toast.makeText(applicationContext,"Unknown failure",Toast.LENGTH_SHORT).show()
+//
+//                }
+//
+//            }
+//
+//
+//
+//        })
+    }
+
+    private fun genderHeightLeft() {
+
+        genderHeightFront()
+//        restClient.genderHeight(Utility.sessionKey,gender,height.toString()).enqueue(object : retrofit2.Callback<String>{
+//            override fun onFailure(call: Call<String>, t: Throwable) {
+//
+//                try {
+//                    Log.d("failure ", t.message)
+//                    Toast.makeText(applicationContext,t.message,Toast.LENGTH_SHORT).show()
+//                } finally {
+//                    Toast.makeText(applicationContext,"Unknown failure",Toast.LENGTH_SHORT).show()
+//
+//                }
+//
+//            }
+//
+//            override fun onResponse(call: Call<String>, response: Response<String>) {
+//                val dialog = MaterialDialog.Builder(this@ImagesGridActivity_3)
+//                        .customView(R.layout.responsedialog, false)
+//                        .show()
+//
+//                dialog.setCancelable(true)
+//
+////
+//                val tvrequest = dialog.customView!!.findViewById<View>(R.id.tvrequest) as? TextView
+////
+//                val tvresponse = dialog.customView!!.findViewById<View>(R.id.tvresponse) as? TextView
+//
+//                val tvParameter = dialog.customView!!.findViewById<View>(R.id.tvrequestparameter) as? TextView
+//
+//                tvrequest?.setText(response.raw().request().url().toString())
+//
+//                tvresponse?.setText(response.toString())
+//
+//
+//                tvParameter?.setText("No request parameter only header")
+//
+//                if (response.code() == 201) {
+//
+//                    Log.d("genderHeight", "201 OK (_uuid_ is response body)")
+//                    Toast.makeText(applicationContext,"201 Ok",Toast.LENGTH_SHORT).show()
+//                    if (response.isSuccessful) {
+//
+//
+//                        Toast.makeText(applicationContext,"sessio key "+ Utility.sessionKey,Toast.LENGTH_SHORT).show()
+//                    }
+//
+//                } else if (response.code() == 400) {
+//                    Log.d("genderHeight", "500 Internal Server Error")
+//                    Toast.makeText(applicationContext,"400 Bad Request (no 'uuid' or 'gender' or 'height' query or query parameter is wrong)",Toast.LENGTH_SHORT).show()
+//
+//                } else if (response.code() == 404) {
+//                    Log.d("genderHeight", "404 Not Found")
+//
+//                    Toast.makeText(applicationContext,"404 Not Found",Toast.LENGTH_SHORT).show()
+//
+//
+//                }
+//                else if (response.code() == 409) {
+//                    Log.d("genderHeight", "409 Conflict (json data has already loaded)")
+//
+//                    Toast.makeText(applicationContext,"409 Conflict (json data has already loaded)",Toast.LENGTH_SHORT).show()
+//
+//
+//                }
+//                else if (response.code() == 500) {
+//                    Log.d("genderHeight", "500 Internal Server Error")
+//
+//                    Toast.makeText(applicationContext,"500 Internal Server Error",Toast.LENGTH_SHORT).show()
+//
+//
+//                }
+//
+//
+//                else {
+//                    Toast.makeText(applicationContext,"Unknown error",Toast.LENGTH_SHORT).show()
+//
+//                }
+//            }
+//
+//        })
+    }
+
+    private fun genderHeightBack() {
+        genderHeightFront()
+
+//        restClient.genderHeight(Utility.sessionKey,gender,height.toString()).enqueue(object : retrofit2.Callback<String>{
+//            override fun onFailure(call: Call<String>, t: Throwable) {
+//                try {
+//                    Log.d("failure ", t.message)
+//                    Toast.makeText(applicationContext,t.message,Toast.LENGTH_SHORT).show()
+//                } finally {
+//                    Toast.makeText(applicationContext,"Unknown failure",Toast.LENGTH_SHORT).show()
+//
+//                }
+//
+//            }
+//
+//            override fun onResponse(call: Call<String>, response: Response<String>) {
+//                val dialog = MaterialDialog.Builder(this@ImagesGridActivity_3)
+//                        .customView(R.layout.responsedialog, false)
+//                        .show()
+//
+//                dialog.setCancelable(true)
+//
+////
+//                val tvrequest = dialog.customView!!.findViewById<View>(R.id.tvrequest) as? TextView
+////
+//                val tvresponse = dialog.customView!!.findViewById<View>(R.id.tvresponse) as? TextView
+//
+//                val tvParameter = dialog.customView!!.findViewById<View>(R.id.tvrequestparameter) as? TextView
+//
+//                tvrequest?.setText(response.raw().request().url().toString())
+//
+//                tvParameter?.setText(response.toString())
+//
+//
+//                tvresponse?.setText("No request parameter only header")
+//                if (response.code() == 201) {
+//
+//                    Log.d("genderHeight", "201 OK (_uuid_ is response body)")
+//                    Toast.makeText(applicationContext,"201 Ok",Toast.LENGTH_SHORT).show()
+//                    if (response.isSuccessful) {
+//
+//
+//                        Toast.makeText(applicationContext,"sessio key "+ Utility.sessionKey,Toast.LENGTH_SHORT).show()
+//                    }
+//
+//                } else if (response.code() == 400) {
+//                    Log.d("genderHeight", "500 Internal Server Error")
+//                    Toast.makeText(applicationContext,"400 Bad Request (no 'uuid' or 'gender' or 'height' query or query parameter is wrong)",Toast.LENGTH_SHORT).show()
+//
+//                } else if (response.code() == 404) {
+//                    Log.d("genderHeight", "404 Not Found")
+//
+//                    Toast.makeText(applicationContext,"404 Not Found",Toast.LENGTH_SHORT).show()
+//
+//
+//                }
+//                else if (response.code() == 409) {
+//                    Log.d("genderHeight", "409 Conflict (json data has already loaded)")
+//
+//                    Toast.makeText(applicationContext,"409 Conflict (json data has already loaded)",Toast.LENGTH_SHORT).show()
+//
+//
+//                }
+//                else if (response.code() == 500) {
+//                    Log.d("genderHeight", "500 Internal Server Error")
+//
+//                    Toast.makeText(applicationContext,"500 Internal Server Error",Toast.LENGTH_SHORT).show()
+//
+//
+//                }
+//
+//
+//                else {
+//                    Toast.makeText(applicationContext,"Unknown error",Toast.LENGTH_SHORT).show()
+//
+//                }
+//            }
+//
+//        })
+    }
+
+    private fun genderHeightFront() {
+        Thread(Runnable {
+
+            val postContent = ""
+            val request = Bridge
+                    .post("https://a3dyou.com:9000/configuration?uuid=d687c943-08cc-4093-a810-658fcb70c9e6&gender=male&height=250")
+                    .body(postContent)
+                    .request()
+
+            request.response().asString()
+
+
+        }).start()
+
+//        restClient.genderHeight(Utility.sessionKey,gender,height .toString()).enqueue(object : retrofit2.Callback<String>{
+//            override fun onFailure(call: Call<String>, t: Throwable) {
+//                try {
+//                    Log.d("failure ", t.message)
+//                    Toast.makeText(applicationContext,t.message,Toast.LENGTH_SHORT).show()
+//                } finally {
+//                    Toast.makeText(applicationContext,"Unknown failure",Toast.LENGTH_SHORT).show()
+//
+//                }
+//            }
+//
+//            override fun onResponse(call: Call<String>, response: Response<String>) {
+//
+//
+//                val dialog = MaterialDialog.Builder(this@ImagesGridActivity_3)
+//                        .customView(R.layout.responsedialog, false)
+//                        .show()
+//
+//                dialog.setCancelable(true)
+//
+////
+//                val tvrequest = dialog.customView!!.findViewById<View>(R.id.tvrequest) as? TextView
+////
+//                val tvresponse = dialog.customView!!.findViewById<View>(R.id.tvresponse) as? TextView
+//
+//                val tvParameter = dialog.customView!!.findViewById<View>(R.id.tvrequestparameter) as? TextView
+//
+//                tvrequest?.setText(response.raw().request().url().toString())
+//
+//                tvresponse?.setText(response.toString())
+//
+//
+//                tvParameter?.setText("No request parameter only header")
+//
+//                if (response.code() == 201) {
+//
+//                    Log.d("genderHeight", "201 OK (_uuid_ is response body)")
+//                    Toast.makeText(applicationContext,"201 Ok",Toast.LENGTH_SHORT).show()
+//                    if (response.isSuccessful) {
+//
+//
+//                        Toast.makeText(applicationContext,"sessio key "+ Utility.sessionKey,Toast.LENGTH_SHORT).show()
+//                    }
+//
+//                } else if (response.code() == 400) {
+//                    Log.d("genderHeight", "500 Internal Server Error")
+//                    Toast.makeText(applicationContext,"400 Bad Request (no 'uuid' or 'gender' or 'height' query or query parameter is wrong)",Toast.LENGTH_SHORT).show()
+//
+//                } else if (response.code() == 404) {
+//                    Log.d("genderHeight", "404 Not Found")
+//
+//                    Toast.makeText(applicationContext,"404 Not Found",Toast.LENGTH_SHORT).show()
+//
+//
+//                }
+//                else if (response.code() == 409) {
+//                    Log.d("genderHeight", "409 Conflict (json data has already loaded)")
+//
+//                    Toast.makeText(applicationContext,"409 Conflict (json data has already loaded)",Toast.LENGTH_SHORT).show()
+//
+//
+//                }
+//                else if (response.code() == 500) {
+//                    Log.d("genderHeight", "500 Internal Server Error")
+//
+//                    Toast.makeText(applicationContext,"500 Internal Server Error",Toast.LENGTH_SHORT).show()
+//
+//                }
+//
+//                else {
+//                    Toast.makeText(applicationContext,"Unknown error",Toast.LENGTH_SHORT).show()
+//                }
+//            }
+//
+//        })
+
+    }
+
+
+
     private var mSensorManager: SensorManager? = null
     private var mSensorX: Sensor? = null
     private var mSensorY: Sensor? = null
     private var mSensorZ: Sensor? = null
+
+
 
 
     private fun getJsonObjectFront() {
@@ -679,8 +1233,16 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
             val jsonObjectTop = JSONObject()
             try {
-                jsonObjectTop.put("x", 2.5)
-                jsonObjectTop.put("y", 2.5)
+                if(hshmap.size>0)
+                {
+                    jsonObjectTop.put("x", hshmap[0])
+                    jsonObjectTop.put("y", hshmap[1])
+                }
+                else
+                {
+                    jsonObjectTop.put("x", 0)
+                    jsonObjectTop.put("y", 0)
+                }
 
             } catch (e: JSONException) {
                 e.printStackTrace()
@@ -689,8 +1251,16 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
             val jsonObjectBottom = JSONObject()
             try {
-                jsonObjectBottom.put("x", 2.5)
-                jsonObjectBottom.put("y", 2.5)
+                if(hshmap.size>0)
+                {
+                    jsonObjectBottom.put("x", hshmap[2])
+                    jsonObjectBottom.put("y", hshmap[3])
+                }
+                else
+                {
+                    jsonObjectBottom.put("x", 0)
+                    jsonObjectBottom.put("y", 0)
+                }
 
             } catch (e: JSONException) {
                 e.printStackTrace()
@@ -762,8 +1332,6 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
                 }
 
             }
-
-
 
 
             var distortion: FloatArray? = FloatArray(4)
@@ -916,46 +1484,125 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
             }
 
 
+            Thread(Runnable {
+                val request = Bridge
+                        .post("https://a3dyou.com:9000/configuration/front?uuid="+Hawk.get("session_key"))
+                        .body("{\n" +
+                                "    \"points\" : {\n" +
+                                "        \"top\" : {\n" +
+                                "            \"x\" :"+hshmap[0]+",\n" +
+                                "            \"y\" : "+hshmap[1]+",\n" +
+                                "        },\n" +
+                                "        \"bottom\" : {\n" +
+                                "            \"x\" :"+ hshmap[2]+",\n" +
+                                "            \"y\" : "+hshmap[3]+"\n" +
+                                "        }\n" +
+                                "    },\n" +
+                                "    \"intrinsics\" : {\n" +
+                                "        \"K\" : { \n" +
+                                "            \"fx\" :"+ 0+",\n" +
+                                "            \"fy\" : 0,\n" +
+                                "            \"cx\" : 0,\n" +
+                                "            \"cy\" : 0,\n" +
+                                "            \"skew\" : 0\n" +
+                                "        },\n" +
+                                "        \"distortion\" : {\n" +
+                                "            \"k1\" : 0,\n" +
+                                "            \"k2\" : 0,\n" +
+                                "            \"k3\" : 0,\n" +
+                                "            \"k4\" :0,\n" +
+                                "            \"p1\" : 0,\n" +
+                                "            \"p2\" : 0\n" +
+                                "        }\n" +
+                                "    },\n" +
+                                "    \"extrinsics\" : {\n" +
+                                "        \"rotation vector component\" : {\n" +
+                                "            \"x\" : 0,\n" +
+                                "            \"y\" : 0,\n" +
+                                "            \"z\" : 0\n" +
+                                "        }\n" +
+                                "    }\n" +
+                                "}")
+                        .request()
+
+                request.response().asString();
+
+                request.response().code()
+
+            }).start()
 
 
-            restClient.frontImageConfig(jsonObjectRoot,RetrofitLibrary.GitApiInterface.session_key).enqueue(object : retrofit2.Callback<FrontImageConfigRes>{
-                override fun onResponse(call: Call<FrontImageConfigRes>, response: Response<FrontImageConfigRes>) {
 
-                    if (response.code() == 201) {
 
-                        if (response.isSuccessful())
-                            Toast.makeText(this@ImagesGridActivity_3, "Success", Toast.LENGTH_SHORT).show()
 
-                        Toast.makeText(this@ImagesGridActivity_3, "OK", Toast.LENGTH_SHORT).show()
 
-                    } else if (response.code() == 400) {
-                        Toast.makeText(this@ImagesGridActivity_3, "Bad Request (no 'uuid' query or json data could not be read)", Toast.LENGTH_SHORT).show()
 
-                    } else if (response.code() == 404) {
-                        Toast.makeText(this@ImagesGridActivity_3, "404 Not Found", Toast.LENGTH_SHORT).show()
+            TastyToast.makeText(applicationContext,"request is ->>>>"+jsonObjectRoot.toString(),TastyToast.LENGTH_LONG,TastyToast.INFO).show()
 
-                    } else if (response.code() == 409) {
-                        Toast.makeText(this@ImagesGridActivity_3, "409 Conflict (json data has already loaded)", Toast.LENGTH_SHORT).show()
 
-                    } else if (response.code() == 500) {
-                        Toast.makeText(this@ImagesGridActivity_3, "500 Internal Server Error", Toast.LENGTH_SHORT).show()
-
-                    } else {
-                        Toast.makeText(this@ImagesGridActivity_3, "False", Toast.LENGTH_SHORT).show()
-
-                    }
-
-                }
-
-                override fun onFailure(call: Call<FrontImageConfigRes>?, t: Throwable?) {
-
-                }
-
-            })
+//            restClient.frontImageConfig(jsonObjectRoot,RetrofitLibrary.GitApiInterface.session_key).enqueue(object : retrofit2.Callback<String>{
+//                override fun onResponse(call: Call<String>, response: Response<String>) {
+//
+//                    val dialog = MaterialDialog.Builder(this@ImagesGridActivity_3)
+//                            .customView(R.layout.responsedialog, false)
+//                            .show()
+//
+//                    dialog.setCancelable(true)
+//
+////
+//                    val tvrequest = dialog.customView!!.findViewById<View>(R.id.tvrequest) as? TextView
+////
+//                    val tvresponse = dialog.customView!!.findViewById<View>(R.id.tvresponse) as? TextView
+//
+//                    val tvParameter = dialog.customView!!.findViewById<View>(R.id.tvrequestparameter) as? TextView
+//
+//                    tvrequest?.setText(response.raw().request().url().toString())
+//
+//                    tvresponse?.setText(response.toString())
+//
+//
+//                    tvParameter?.setText(jsonObjectRoot.toString())
+//
+//
+//                    if (response.code() == 201) {
+//
+//                        if (response.isSuccessful())
+//                            Toast.makeText(this@ImagesGridActivity_3, "Success", Toast.LENGTH_SHORT).show()
+//
+//                        Toast.makeText(this@ImagesGridActivity_3, "OK", Toast.LENGTH_SHORT).show()
+//
+//                    } else if (response.code() == 400) {
+//                        Toast.makeText(this@ImagesGridActivity_3, "Bad Request (no 'uuid' query or json data could not be read)", Toast.LENGTH_SHORT).show()
+//
+//                    } else if (response.code() == 404) {
+//                        Toast.makeText(this@ImagesGridActivity_3, "404 Not Found", Toast.LENGTH_SHORT).show()
+//
+//                    } else if (response.code() == 409) {
+//                        Toast.makeText(this@ImagesGridActivity_3, "409 Conflict (json data has already loaded)", Toast.LENGTH_SHORT).show()
+//
+//                    } else if (response.code() == 500) {
+//                        Toast.makeText(this@ImagesGridActivity_3, "500 Internal Server Error", Toast.LENGTH_SHORT).show()
+//
+//                    } else {
+//                        Toast.makeText(this@ImagesGridActivity_3, "False", Toast.LENGTH_SHORT).show()
+//
+//                    }
+//
+//                }
+//
+//                override fun onFailure(call: Call<String>, t: Throwable) {
+//                    Log.d("failure ", t.message)
+//
+//                    Toast.makeText(this@ImagesGridActivity_3, t.message.toString(), Toast.LENGTH_SHORT).show()
+//
+//                }
+//
+//            })
         }
 
 
     }
+
     private fun getJsonObjectleftImage() {
 
 
@@ -966,8 +1613,16 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
             val jsonObjectTop = JSONObject()
             try {
-                jsonObjectTop.put("x", 2.5)
-                jsonObjectTop.put("y", 2.5)
+                if(hshmap.size>0)
+                {
+                    jsonObjectTop.put("x", hshmap[0])
+                    jsonObjectTop.put("y", hshmap[1])
+                }
+                else
+                {
+                    jsonObjectTop.put("x", 0)
+                    jsonObjectTop.put("y", 0)
+                }
 
             } catch (e: JSONException) {
                 e.printStackTrace()
@@ -976,12 +1631,21 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
             val jsonObjectBottom = JSONObject()
             try {
-                jsonObjectBottom.put("x", 2.5)
-                jsonObjectBottom.put("y", 2.5)
+                if(hshmap.size>0)
+                {
+                    jsonObjectBottom.put("x", hshmap[2])
+                    jsonObjectBottom.put("y", hshmap[3])
+                }
+                else
+                {
+                    jsonObjectBottom.put("x", 0)
+                    jsonObjectBottom.put("y", 0)
+                }
 
             } catch (e: JSONException) {
                 e.printStackTrace()
             }
+
 
 
             val jsonObjectPoints = JSONObject()
@@ -1002,7 +1666,11 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
             /*Start-------------------intrinsics Object-----------------------------Starts*/
             //Intrinsics Object
 
-            val lensIntrinsicCalibration = CameraCharacteristics.LENS_INTRINSIC_CALIBRATION
+            val lensIntrinsicCalibration = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                CameraCharacteristics.LENS_INTRINSIC_CALIBRATION
+            } else {
+                TODO("VERSION.SDK_INT < M")
+            }
 
             val manager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
             var chars: CameraCharacteristics? = null
@@ -1018,7 +1686,15 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
 
             assert(chars != null)
-            val facing = chars!!.get(CameraCharacteristics.LENS_INTRINSIC_CALIBRATION)
+            val facing = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    chars!!.get(CameraCharacteristics.LENS_INTRINSIC_CALIBRATION)
+                } else {
+                    TODO("VERSION.SDK_INT < M")
+                }
+            } else {
+                TODO("VERSION.SDK_INT < LOLLIPOP")
+            }
 
             val jsonObjectK = JSONObject()
 
@@ -1181,46 +1857,113 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
                 e.printStackTrace()
             }
 
+            TastyToast.makeText(applicationContext,"request is ->>>>"+jsonObjectRoot.toString(),TastyToast.LENGTH_LONG,TastyToast.INFO).show()
+            Thread(Runnable {
+                val request = Bridge
+                        .post("https://a3dyou.com:9000/configuration/left?uuid="+Hawk.get("session_key"))
+                        .body("{\n" +
+                                "    \"points\" : {\n" +
+                                "        \"top\" : {\n" +
+                                "            \"x\" :"+hshmap[0]+",\n" +
+                                "            \"y\" : "+hshmap[1]+",\n" +
+                                "        },\n" +
+                                "        \"bottom\" : {\n" +
+                                "            \"x\" :"+ hshmap[2]+",\n" +
+                                "            \"y\" : "+hshmap[3]+"\n" +
+                                "        }\n" +
+                                "    },\n" +
+                                "    \"intrinsics\" : {\n" +
+                                "        \"K\" : { \n" +
+                                "            \"fx\" :"+ 0+",\n" +
+                                "            \"fy\" : 0,\n" +
+                                "            \"cx\" : 0,\n" +
+                                "            \"cy\" : 0,\n" +
+                                "            \"skew\" : 0\n" +
+                                "        },\n" +
+                                "        \"distortion\" : {\n" +
+                                "            \"k1\" : 0,\n" +
+                                "            \"k2\" : 0,\n" +
+                                "            \"k3\" : 0,\n" +
+                                "            \"k4\" :0,\n" +
+                                "            \"p1\" : 0,\n" +
+                                "            \"p2\" : 0\n" +
+                                "        }\n" +
+                                "    },\n" +
+                                "    \"extrinsics\" : {\n" +
+                                "        \"rotation vector component\" : {\n" +
+                                "            \"x\" : 0,\n" +
+                                "            \"y\" : 0,\n" +
+                                "            \"z\" : 0\n" +
+                                "        }\n" +
+                                "    }\n" +
+                                "}")
+                        .request()
+
+                request.response().asString();
+
+                request.response().code()
+
+            }).start()
 
 
-
-            restClient.leftImageConfig(jsonObjectRoot,RetrofitLibrary.GitApiInterface.session_key).enqueue(object : retrofit2.Callback<LeftImageConfigRes>{
-                override fun onFailure(call: Call<LeftImageConfigRes>, t: Throwable) {
-                    Toast.makeText(this@ImagesGridActivity_3, t.message, Toast.LENGTH_SHORT).show()
-                }
-
-                override fun onResponse(call: Call<LeftImageConfigRes>, response: Response<LeftImageConfigRes>) {
-                    if (response.code() == 201) {
-
-                        if (response.isSuccessful())
-                            Toast.makeText(this@ImagesGridActivity_3, "Success", Toast.LENGTH_SHORT).show()
-
-                        Toast.makeText(this@ImagesGridActivity_3, "OK", Toast.LENGTH_SHORT).show()
-
-                    } else if (response.code() == 400) {
-                        Toast.makeText(this@ImagesGridActivity_3, "Bad Request (no 'uuid' query or json data could not be read)", Toast.LENGTH_SHORT).show()
-
-                    } else if (response.code() == 404) {
-                        Toast.makeText(this@ImagesGridActivity_3, "404 Not Found", Toast.LENGTH_SHORT).show()
-
-                    } else if (response.code() == 409) {
-                        Toast.makeText(this@ImagesGridActivity_3, "409 Conflict (json data has already loaded)", Toast.LENGTH_SHORT).show()
-
-                    } else if (response.code() == 500) {
-                        Toast.makeText(this@ImagesGridActivity_3, "500 Internal Server Error", Toast.LENGTH_SHORT).show()
-
-                    } else {
-                        Toast.makeText(this@ImagesGridActivity_3, "False", Toast.LENGTH_SHORT).show()
-
-                    }
-                }
-
-            })
+//            restClient.leftImageConfig(jsonObjectRoot,RetrofitLibrary.GitApiInterface.session_key).enqueue(object : retrofit2.Callback<String>{
+//                override fun onFailure(call: Call<String>, t: Throwable) {
+//                    Toast.makeText(this@ImagesGridActivity_3, t.message, Toast.LENGTH_SHORT).show()
+//                }
+//
+//                override fun onResponse(call: Call<String>, response: Response<String>) {
+//
+//                    val dialog = MaterialDialog.Builder(this@ImagesGridActivity_3)
+//                            .customView(R.layout.responsedialog, false)
+//                            .show()
+//
+//                    dialog.setCancelable(true)
+//
+////
+//                    val tvrequest = dialog.customView!!.findViewById<View>(R.id.tvrequest) as? TextView
+////
+//                    val tvresponse = dialog.customView!!.findViewById<View>(R.id.tvresponse) as? TextView
+//
+//                    val tvParameter = dialog.customView!!.findViewById<View>(R.id.tvrequestparameter) as? TextView
+//
+//                    tvrequest?.setText(response.raw().request().url().toString())
+//
+//                    tvresponse?.setText(response.toString())
+//
+//
+//                    tvParameter?.setText(jsonObjectRoot.toString())
+//                    if (response.code() == 201) {
+//
+//                        if (response.isSuccessful())
+//                            Toast.makeText(this@ImagesGridActivity_3, "Success", Toast.LENGTH_SHORT).show()
+//
+//                        Toast.makeText(this@ImagesGridActivity_3, "OK", Toast.LENGTH_SHORT).show()
+//
+//                    } else if (response.code() == 400) {
+//                        Toast.makeText(this@ImagesGridActivity_3, "Bad Request (no 'uuid' query or json data could not be read)", Toast.LENGTH_SHORT).show()
+//
+//                    } else if (response.code() == 404) {
+//                        Toast.makeText(this@ImagesGridActivity_3, "404 Not Found", Toast.LENGTH_SHORT).show()
+//
+//                    } else if (response.code() == 409) {
+//                        Toast.makeText(this@ImagesGridActivity_3, "409 Conflict (json data has already loaded)", Toast.LENGTH_SHORT).show()
+//
+//                    } else if (response.code() == 500) {
+//                        Toast.makeText(this@ImagesGridActivity_3, "500 Internal Server Error", Toast.LENGTH_SHORT).show()
+//
+//                    } else {
+//                        Toast.makeText(this@ImagesGridActivity_3, "False", Toast.LENGTH_SHORT).show()
+//
+//                    }
+//                }
+//
+//            })
 
 
         }
 
     }
+
     private fun getJsonObjectrightImage() {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -1230,8 +1973,16 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
             val jsonObjectTop = JSONObject()
             try {
-                jsonObjectTop.put("x", 2.5)
-                jsonObjectTop.put("y", 2.5)
+                if(hshmap.size>0)
+                {
+                    jsonObjectTop.put("x", hshmap[0])
+                    jsonObjectTop.put("y", hshmap[1])
+                }
+                else
+                {
+                    jsonObjectTop.put("x", 0)
+                    jsonObjectTop.put("y", 0)
+                }
 
             } catch (e: JSONException) {
                 e.printStackTrace()
@@ -1240,12 +1991,21 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
             val jsonObjectBottom = JSONObject()
             try {
-                jsonObjectBottom.put("x", 2.5)
-                jsonObjectBottom.put("y", 2.5)
+                if(hshmap.size>0)
+                {
+                    jsonObjectBottom.put("x", hshmap[2])
+                    jsonObjectBottom.put("y", hshmap[3])
+                }
+                else
+                {
+                    jsonObjectBottom.put("x", 0)
+                    jsonObjectBottom.put("y", 0)
+                }
 
             } catch (e: JSONException) {
                 e.printStackTrace()
             }
+
 
 
             val jsonObjectPoints = JSONObject()
@@ -1446,58 +2206,133 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
             }
 
 
+            TastyToast.makeText(applicationContext,"request is ->>>>"+jsonObjectRoot.toString(),TastyToast.LENGTH_LONG,TastyToast.INFO).show()
+            Thread(Runnable {
+                val request = Bridge
+                        .post("https://a3dyou.com:9000/configuration/right?uuid="+Hawk.get("session_key"))
+                        .body("{\n" +
+                                "    \"points\" : {\n" +
+                                "        \"top\" : {\n" +
+                                "            \"x\" :"+hshmap[0]+",\n" +
+                                "            \"y\" : "+hshmap[1]+",\n" +
+                                "        },\n" +
+                                "        \"bottom\" : {\n" +
+                                "            \"x\" :"+ hshmap[2]+",\n" +
+                                "            \"y\" : "+hshmap[3]+"\n" +
+                                "        }\n" +
+                                "    },\n" +
+                                "    \"intrinsics\" : {\n" +
+                                "        \"K\" : { \n" +
+                                "            \"fx\" :"+ 0+",\n" +
+                                "            \"fy\" : 0,\n" +
+                                "            \"cx\" : 0,\n" +
+                                "            \"cy\" : 0,\n" +
+                                "            \"skew\" : 0\n" +
+                                "        },\n" +
+                                "        \"distortion\" : {\n" +
+                                "            \"k1\" : 0,\n" +
+                                "            \"k2\" : 0,\n" +
+                                "            \"k3\" : 0,\n" +
+                                "            \"k4\" :0,\n" +
+                                "            \"p1\" : 0,\n" +
+                                "            \"p2\" : 0\n" +
+                                "        }\n" +
+                                "    },\n" +
+                                "    \"extrinsics\" : {\n" +
+                                "        \"rotation vector component\" : {\n" +
+                                "            \"x\" : 0,\n" +
+                                "            \"y\" : 0,\n" +
+                                "            \"z\" : 0\n" +
+                                "        }\n" +
+                                "    }\n" +
+                                "}")
+                        .request()
 
+                request.response().asString();
 
-            restClient.rightImageConfig(jsonObjectRoot,RetrofitLibrary.GitApiInterface.session_key).enqueue(object : retrofit2.Callback<RightImageConfigRes>{
-                override fun onFailure(call: Call<RightImageConfigRes>, t: Throwable) {
-                    Toast.makeText(this@ImagesGridActivity_3, t.message, Toast.LENGTH_SHORT).show()
-                }
+                request.response().code()
 
-                override fun onResponse(call: Call<RightImageConfigRes>, response: Response<RightImageConfigRes>) {
-                    if (response.code() == 201) {
+            }).start()
 
-                        if (response.isSuccessful())
-                            Toast.makeText(this@ImagesGridActivity_3, "Success", Toast.LENGTH_SHORT).show()
-
-                        Toast.makeText(this@ImagesGridActivity_3, "OK", Toast.LENGTH_SHORT).show()
-
-                    } else if (response.code() == 400) {
-                        Toast.makeText(this@ImagesGridActivity_3, "Bad Request (no 'uuid' query or json data could not be read)", Toast.LENGTH_SHORT).show()
-
-                    } else if (response.code() == 404) {
-                        Toast.makeText(this@ImagesGridActivity_3, "404 Not Found", Toast.LENGTH_SHORT).show()
-
-                    } else if (response.code() == 409) {
-                        Toast.makeText(this@ImagesGridActivity_3, "409 Conflict (json data has already loaded)", Toast.LENGTH_SHORT).show()
-
-                    } else if (response.code() == 500) {
-                        Toast.makeText(this@ImagesGridActivity_3, "500 Internal Server Error", Toast.LENGTH_SHORT).show()
-
-                    } else {
-                        Toast.makeText(this@ImagesGridActivity_3, "False", Toast.LENGTH_SHORT).show()
-
-                    }
-                }
-
-
-            })
+//            restClient.rightImageConfig(jsonObjectRoot,RetrofitLibrary.GitApiInterface.session_key).enqueue(object : retrofit2.Callback<String>{
+//                override fun onFailure(call: Call<String>, t: Throwable) {
+//                    Toast.makeText(this@ImagesGridActivity_3, t.message, Toast.LENGTH_SHORT).show()
+//                }
+//
+//                override fun onResponse(call: Call<String>, response: Response<String>) {
+//
+//                    val dialog = MaterialDialog.Builder(this@ImagesGridActivity_3)
+//                            .customView(R.layout.responsedialog, false)
+//                            .show()
+//
+//                    dialog.setCancelable(true)
+//
+////
+//                    val tvrequest = dialog.customView!!.findViewById<View>(R.id.tvrequest) as? TextView
+////
+//                    val tvresponse = dialog.customView!!.findViewById<View>(R.id.tvresponse) as? TextView
+//
+//                    val tvParameter = dialog.customView!!.findViewById<View>(R.id.tvrequestparameter) as? TextView
+//
+//                    tvrequest?.setText(response.raw().request().url().toString())
+//
+//                    tvresponse?.setText(response.toString())
+//
+//
+//                    tvParameter?.setText(jsonObjectRoot.toString())
+//                    if (response.code() == 201) {
+//
+//                        if (response.isSuccessful())
+//                            Toast.makeText(this@ImagesGridActivity_3, "Success", Toast.LENGTH_SHORT).show()
+//
+//                        Toast.makeText(this@ImagesGridActivity_3, "OK", Toast.LENGTH_SHORT).show()
+//
+//                    } else if (response.code() == 400) {
+//                        Toast.makeText(this@ImagesGridActivity_3, "Bad Request (no 'uuid' query or json data could not be read)", Toast.LENGTH_SHORT).show()
+//
+//                    } else if (response.code() == 404) {
+//                        Toast.makeText(this@ImagesGridActivity_3, "404 Not Found", Toast.LENGTH_SHORT).show()
+//
+//                    } else if (response.code() == 409) {
+//                        Toast.makeText(this@ImagesGridActivity_3, "409 Conflict (json data has already loaded)", Toast.LENGTH_SHORT).show()
+//
+//                    } else if (response.code() == 500) {
+//                        Toast.makeText(this@ImagesGridActivity_3, "500 Internal Server Error", Toast.LENGTH_SHORT).show()
+//
+//                    } else {
+//                        Toast.makeText(this@ImagesGridActivity_3, "False", Toast.LENGTH_SHORT).show()
+//
+//                    }
+//                }
+//
+//
+//            })
 
 
         }
 
 
     }
-    private fun getJsonObjectbackImage() {
+
+    private fun getJsonObjectbackImage()   {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-
 
             /*Start-------------------Points Object-----------------------------Starts*/
 
             val jsonObjectTop = JSONObject()
             try {
-                jsonObjectTop.put("x", 2.5)
-                jsonObjectTop.put("y", 2.5)
+                if(hshmap.size>0)
+                {
+                    jsonObjectTop.put("x", hshmap[0])
+                    jsonObjectTop.put("y", hshmap[1])
+                }
+                else
+                {
+                    jsonObjectTop.put("x", 0)
+                    jsonObjectTop.put("y", 0)
+                }
+
 
             } catch (e: JSONException) {
                 e.printStackTrace()
@@ -1505,9 +2340,16 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
 
             val jsonObjectBottom = JSONObject()
-            try {
-                jsonObjectBottom.put("x", 2.5)
-                jsonObjectBottom.put("y", 2.5)
+            try {if(hshmap.size>0)
+            {
+                jsonObjectBottom.put("x", hshmap[2])
+                jsonObjectBottom.put("y", hshmap[3])
+            }
+            else
+            {
+                jsonObjectBottom.put("x", 0)
+                jsonObjectBottom.put("y", 0)
+            }
 
             } catch (e: JSONException) {
                 e.printStackTrace()
@@ -1712,46 +2554,118 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
             }
 
 
+            TastyToast.makeText(applicationContext,"request is ->>>>"+jsonObjectRoot.toString(),TastyToast.LENGTH_LONG,TastyToast.INFO).show()
 
 
-            restClient.backImageConfig(jsonObjectRoot,RetrofitLibrary.GitApiInterface.session_key).enqueue(object : retrofit2.Callback<BackImageConfigRes>{
-                override fun onFailure(call: Call<BackImageConfigRes>, t: Throwable) {
-                    Toast.makeText(this@ImagesGridActivity_3, t.message, Toast.LENGTH_SHORT).show()
-                }
+            Thread(Runnable {
+                val request = Bridge
+                        .post("https://a3dyou.com:9000/configuration/back?uuid="+Hawk.get("session_key"))
+                        .body("{\n" +
+                                "    \"points\" : {\n" +
+                                "        \"top\" : {\n" +
+                                "            \"x\" :"+hshmap[0]+",\n" +
+                                "            \"y\" : "+hshmap[1]+",\n" +
+                                "        },\n" +
+                                "        \"bottom\" : {\n" +
+                                "            \"x\" :"+ hshmap[2]+",\n" +
+                                "            \"y\" : "+hshmap[3]+"\n" +
+                                "        }\n" +
+                                "    },\n" +
+                                "    \"intrinsics\" : {\n" +
+                                "        \"K\" : { \n" +
+                                "            \"fx\" :"+ 0+",\n" +
+                                "            \"fy\" :"+ 0+",\n" +
+                                "            \"cx\" :"+ 0+",\n" +
+                                "            \"cy\" :"+ 0+",\n" +
+                                "            \"skew\" :"+ 0+"\n" +
+                                "        },\n" +
+                                "        \"distortion\" : {\n" +
+                                "            \"k1\" : 0,\n" +
+                                "            \"k2\" : 0,\n" +
+                                "            \"k3\" : 0,\n" +
+                                "            \"k4\" :0,\n" +
+                                "            \"p1\" : 0,\n" +
+                                "            \"p2\" : 0\n" +
+                                "        }\n" +
+                                "    },\n" +
+                                "    \"extrinsics\" : {\n" +
+                                "        \"rotation vector component\" : {\n" +
+                                "            \"x\" : 0,\n" +
+                                "            \"y\" : 0,\n" +
+                                "            \"z\" : 0\n" +
+                                "        }\n" +
+                                "    }\n" +
+                                "}")
+                        .request()
 
-                override fun onResponse(call: Call<BackImageConfigRes>, response: Response<BackImageConfigRes>) {
-                    if (response.code() == 201) {
+                request.response().asString();
 
-                        if (response.isSuccessful())
-                            Toast.makeText(this@ImagesGridActivity_3, "Success", Toast.LENGTH_SHORT).show()
+                request.response().code()
 
-                        Toast.makeText(this@ImagesGridActivity_3, "OK", Toast.LENGTH_SHORT).show()
+            }).start()
 
-                    } else if (response.code() == 400) {
-                        Toast.makeText(this@ImagesGridActivity_3, "Bad Request (no 'uuid' query or json data could not be read)", Toast.LENGTH_SHORT).show()
-
-                    } else if (response.code() == 404) {
-                        Toast.makeText(this@ImagesGridActivity_3, "404 Not Found", Toast.LENGTH_SHORT).show()
-
-                    } else if (response.code() == 409) {
-                        Toast.makeText(this@ImagesGridActivity_3, "409 Conflict (json data has already loaded)", Toast.LENGTH_SHORT).show()
-
-                    } else if (response.code() == 500) {
-                        Toast.makeText(this@ImagesGridActivity_3, "500 Internal Server Error", Toast.LENGTH_SHORT).show()
-
-                    } else {
-                        Toast.makeText(this@ImagesGridActivity_3, "False", Toast.LENGTH_SHORT).show()
-
-                    }                          }
-
-
-            })
+//            restClient.backImageConfig(jsonObjectRoot,RetrofitLibrary.GitApiInterface.session_key).enqueue(object : retrofit2.Callback<String>{
+//                override fun onFailure(call: Call<String>, t: Throwable) {
+//                    Toast.makeText(this@ImagesGridActivity_3, t.message, Toast.LENGTH_SHORT).show()
+//                }
+//
+//                override fun onResponse(call: Call<String>, response: Response<String>) {
+//
+//                    val dialog = MaterialDialog.Builder(this@ImagesGridActivity_3)
+//                            .customView(R.layout.responsedialog, false)
+//                            .show()
+//
+//                    dialog.setCancelable(true)
+//
+////
+//                    val tvrequest = dialog.customView!!.findViewById<View>(R.id.tvrequest) as? TextView
+////
+//                    val tvresponse = dialog.customView!!.findViewById<View>(R.id.tvresponse) as? TextView
+//
+//                    val tvParameter = dialog.customView!!.findViewById<View>(R.id.tvrequestparameter) as? TextView
+//
+//                    tvrequest?.setText(response.raw().request().url().toString())
+//
+//                    tvresponse?.setText(response.toString())
+//
+//
+//                    tvParameter?.setText(jsonObjectRoot.toString())
+//                    if (response.code() == 201) {
+//
+//                        if (response.isSuccessful())
+//                            Toast.makeText(this@ImagesGridActivity_3, "Success", Toast.LENGTH_SHORT).show()
+//
+//                        Toast.makeText(this@ImagesGridActivity_3, "OK", Toast.LENGTH_SHORT).show()
+//
+//                    } else if (response.code() == 400) {
+//                        Toast.makeText(this@ImagesGridActivity_3, "Bad Request (no 'uuid' query or json data could not be read)", Toast.LENGTH_SHORT).show()
+//
+//                    } else if (response.code() == 404) {
+//                        Toast.makeText(this@ImagesGridActivity_3, "404 Not Found", Toast.LENGTH_SHORT).show()
+//
+//                    } else if (response.code() == 409) {
+//                        Toast.makeText(this@ImagesGridActivity_3, "409 Conflict (json data has already loaded)", Toast.LENGTH_SHORT).show()
+//
+//                    } else if (response.code() == 500) {
+//                        Toast.makeText(this@ImagesGridActivity_3, "500 Internal Server Error", Toast.LENGTH_SHORT).show()
+//
+//                    } else {
+//                        Toast.makeText(this@ImagesGridActivity_3, "False", Toast.LENGTH_SHORT).show()
+//
+//                    }                          }
+//
+//
+//            })
 
 
         }
 
 
     }
+
+
+
+
 
     private fun saveImageToFile(file: File?) {
         if (mCameraBitmap != null) {
@@ -1814,13 +2728,11 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
     }
 
-
     fun RotateBitmap(source: Bitmap, angle: Float): Bitmap {
         val matrix = Matrix()
         matrix.postRotate(angle)
         return Bitmap.createBitmap(source, 0, 0, source.width, source.height, matrix, true)
     }
-
 
     class ImagesAdapter : BaseAdapter {
         var foodsList = ArrayList<ImagesModel>()
@@ -1863,6 +2775,7 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
             var gridView = inflator.inflate(R.layout.grid_item_layout, null)
             gridView.imagePerson.setImageResource(food.image!!)
 
+
             /* try {
                  val bitmap = BitmapFactory.decodeStream(context!!.getAssets().open(foodsList[position].image))
                  gridView.imagePerson.setImageBitmap(bitmap)
@@ -1896,5 +2809,9 @@ class ImagesGridActivity_3 : AppCompatActivity(), View.OnTouchListener {
 
     }
 
+    override fun onResume() {
+        super.onResume()
+
+    }
 
 }

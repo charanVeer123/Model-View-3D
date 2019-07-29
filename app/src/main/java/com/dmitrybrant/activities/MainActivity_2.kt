@@ -10,8 +10,11 @@ import android.support.v7.app.AppCompatActivity
 import android.view.View
 import android.view.Window
 import android.view.WindowManager
+import android.widget.Button
+import android.widget.EditText
+import android.widget.RadioGroup
 import android.widget.Toast
-import com.dmitrybrant.dialogs.InstructionDialog
+import com.afollestad.materialdialogs.MaterialDialog
 import com.dmitrybrant.modelviewer.R
 import com.droidbyme.dialoglib.AnimUtils
 import com.droidbyme.dialoglib.DroidDialog
@@ -21,19 +24,24 @@ import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
 
-/**
- * Created by dharamveer on 28/3/18.
- */
+
 class MainActivity_2 : AppCompatActivity(), View.OnClickListener {
 
 
     val CAMERA_REQUEST_CODE = 0
     lateinit var imageFilePath: String
     private val REQUEST_SELECT_IMAGE_IN_ALBUM = 1
+    var dialogMaterial = null
 
+    var height: String?=null
+    var gender: String?="male"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+
+        showDialogHeight();
+
 
         //Remove title bar
         this.requestWindowFeature(Window.FEATURE_NO_TITLE)
@@ -42,10 +50,6 @@ class MainActivity_2 : AppCompatActivity(), View.OnClickListener {
         this.window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN)
 
         setContentView(R.layout.activity_kotlin_app)
-
-
-        val dialog = InstructionDialog(this@MainActivity_2)
-        dialog.show()
 
 
         txtMyProfile.setOnClickListener(this)
@@ -59,6 +63,183 @@ class MainActivity_2 : AppCompatActivity(), View.OnClickListener {
 
         imageCamera.setOnClickListener(this)
         openDrawer.setOnClickListener(this)
+
+    }
+
+    private fun showDialogHeight() {
+
+
+
+        val dialog = MaterialDialog.Builder(this)
+                .customView(R.layout.heightdiaog, false)
+                .show()
+
+        dialog.setCancelable(false)
+
+//
+        val btSubmit = dialog.customView!!.findViewById<View>(R.id.button2) as? Button
+//
+        val edHeight = dialog.customView!!.findViewById<View>(R.id.editText) as? EditText
+
+        if (btSubmit != null) {
+            btSubmit.setOnClickListener{
+                val data  = edHeight?.text.toString()
+                if(data.length>0)
+                {
+                    dialog.dismiss()
+                    height = data
+                    showDialogGender();
+                }
+
+            }
+        }
+
+
+
+//        val edGender = dialog.customView!!.findViewById<View>(R.id.edGender) as? EditText
+
+
+
+
+//        val btSubmit = dialog.customView!!.findViewById<View>(R.id.button) as Button
+//        val edHeight = dialog.customView!!.findViewById<View>(R.id.editText) as EditText
+//
+//        if (btSubmit != null) {
+//            btSubmit.setOnClickListener {
+//
+//                if (edHeight != null) {
+//                    val data  = edHeight.text.toString()
+//
+//                    if(data.length==7)
+//                    {
+//
+//                        if(data.contains(".") && edGender!=null)
+//                        {
+//                            height = data
+//                            val data = edGender.text.toString()
+//                            if(!data.isBlank() && data.equals("male",true) || data.equals("female",true))
+//                            {
+//                                gender = data
+//                                dialog.dismiss()
+//                            }
+//
+//                            else
+//                            {
+//                                TastyToast.makeText(applicationContext,"Check Gender",TastyToast.LENGTH_SHORT,TastyToast.ERROR).show()
+//                            }
+//
+//
+//                        }
+//                        else
+//                        {
+//
+//                            TastyToast.makeText(applicationContext,"Format should be XXX.YYY ",TastyToast.LENGTH_SHORT,TastyToast.ERROR).show()
+//                        }
+//                    }
+//                    else
+//                    {
+//
+//                        TastyToast.makeText(applicationContext,"Check Length of Height ",TastyToast.LENGTH_SHORT,TastyToast.ERROR).show()
+//                    }
+//
+//
+//                }
+//
+////                else if(edGender!=null)
+////                {
+////
+////                    val data = edGender.text.toString()
+////                    if(!data.isBlank())
+////                        gender = data
+////                    else
+////                        TastyToast.makeText(applicationContext,"Check Gender",TastyToast.LENGTH_SHORT,TastyToast.ERROR).show()
+////                }
+//
+//            }
+//        }
+
+
+
+//        if (edHeight != null) {
+//            edHeight.addTextChangedListener(object : TextWatcher {
+//                override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {
+//
+//                }
+//
+//                override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//                }
+//
+//                override fun afterTextChanged(s: Editable) {
+//
+//                }
+//            })
+//        }
+
+
+
+    }
+
+    private fun showDialogGender() {
+
+
+        val dialog = MaterialDialog.Builder(this)
+                .customView(R.layout.genderdiaog, false)
+                .show()
+
+        dialog.setCancelable(false)
+
+//
+        val btSubmit = dialog.customView!!.findViewById<View>(R.id.btSubmit) as? Button
+
+        val radioGroup = dialog.customView!!.findViewById<View>(R.id.btSubmit) as? RadioGroup
+//
+        radioGroup?.setOnCheckedChangeListener(RadioGroup.OnCheckedChangeListener { group, checkedId ->
+
+
+            if(checkedId==R.id.rmale)
+            {
+                gender = "male"
+            }
+            else
+                if(checkedId==R.id.female)
+                {
+
+                    gender = "female"
+
+                }
+
+
+
+
+        })
+
+
+
+
+        btSubmit?.setOnClickListener{
+
+            dialog.dismiss()
+
+
+        }
+
+
+
+
+
+
+
+
 
     }
 
@@ -140,6 +321,10 @@ class MainActivity_2 : AppCompatActivity(), View.OnClickListener {
                 //   Toast.makeText(this,"Camera Open",Toast.LENGTH_SHORT).show()
 
                 val intent = Intent(this, ImagesGridActivity_3::class.java)
+                intent.putExtra("dia","show")
+                intent.putExtra("h",height+"")
+                intent.putExtra("g",gender+"")
+
                 startActivity(intent)
 
 

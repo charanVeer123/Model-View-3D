@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0e0e0e"
+    android:orientation="vertical"
+    android:id="@+id/llLinear"
+    >
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" >
+
+        <SurfaceView
+            android:id="@+id/preview_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <LinearLayout
+                android:layout_centerInParent="true"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:id="@+id/linearLayout3">
+
+                <View
+                    android:layout_width="2dp"
+                    android:layout_height="match_parent"
+                    android:background="#800000">
+
+                </View>
+
+                <View
+                    android:layout_width="2dp"
+                    android:layout_marginLeft="20dp"
+                    android:layout_height="match_parent"
+                    android:background="#800000">
+
+                </View>
+
+
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:visibility="visible"
+                android:layout_alignParentTop="true"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="30dp"
+                android:orientation="vertical"
+                android:id="@+id/linearLayout2">
+
+                <View
+                    android:visibility="gone"
+                    android:id="@+id/horizTopLine1"
+                    android:layout_width="match_parent"
+                    android:layout_height="2dp"
+                    android:background="#800000">
+
+                </View>
+
+                <View
+                    android:visibility="gone"
+                    android:id="@+id/horizTopLine2"
+                    android:layout_marginTop="10dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="2dp"
+                    android:background="#800000">
+
+                </View>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_alignParentBottom="true"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="30dp"
+                android:orientation="vertical">
+
+                <View
+                    android:id="@+id/bottomline1"
+                    android:layout_width="match_parent"
+                    android:layout_height="2dp"
+                    android:background="#800000">
+
+                </View>
+
+                <View
+                    android:id="@+id/bottomline2"
+                    android:layout_marginTop="10dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="2dp"
+                    android:background="#800000">
+                </View>
+            </LinearLayout>
+
+
+        </RelativeLayout>
+
+        <ImageView
+            android:id="@+id/camera_image_viewtop"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/top"
+            android:layout_marginBottom="@dimen/_50sdp"
+            android:visibility="invisible"
+            />
+
+        <ImageView
+            android:id="@+id/camera_image_viewbottom"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/bottom"
+            android:layout_marginTop="@dimen/_50sdp"
+            android:visibility="invisible"
+            />
+
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:gravity="center"
+        android:orientation="horizontal" >
+
+        <Button
+            android:id="@+id/btCapture"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:onClick="captureImage"
+            android:text="@string/capture_image" />
+
+        <Button
+            android:id="@+id/done_button"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:text="@string/done"
+            android:visibility="gone"
+            />
+    </LinearLayout>
+
+</LinearLayout>

@@ -21,9 +21,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 
-/**
- * Created by dharamveer on 20/3/18.
- */
+
 
 class CameraActivity : Activity(), Camera.PictureCallback, SurfaceHolder.Callback {
 

@@ -11,7 +11,8 @@
     <ImageView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/imagelefttop"/>
+        android:src="@drawable/imagelefttop"
+        android:id="@+id/imageView" />
 
     <ImageView
         android:layout_width="wrap_content"
@@ -32,15 +33,21 @@
         app:fontPath="fonts/HindVadodara-Bold.ttf"
         android:textColor="@color/yellowtext"/>
 
+
+
+
+
     <GridView
         android:id="@+id/gridCapture"
         android:gravity="center"
         android:columnWidth="@dimen/_100sdp"
         android:stretchMode="columnWidth"
         android:horizontalSpacing="15dp"
-        android:padding="@dimen/_10sdp"
+
         android:numColumns="2"
         android:verticalSpacing="15dp"
+
+
         android:layout_below="@id/txtCaptureImages"
         android:layout_above="@id/bottomcreate"
         android:layout_width="match_parent"

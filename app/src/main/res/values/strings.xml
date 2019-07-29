@@ -31,7 +31,10 @@
     <string name="fifth_point">5. A person should have a correct posture up to the position of the arms and legs relative to the body.</string>
     <string name="sixth_point">6. Body should be oriented vertically on the image.</string>
     <string name="seven_point">7. Body location on the image should satisfy the certain criteria.</string>
-
+    <string name="title">Information</string>
+    <string name="positive">Got it</string>
+    <string name="content">Lorem Ipsum</string>
+    <string name="agree">Got It</string>
 
 
 </resources>

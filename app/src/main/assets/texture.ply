@@ -1,0 +1,14 @@
+ply
+format binary_little_endian 1.0
+comment TextureFile Parameterization.png
+element vertex 50383
+property float x
+property float y
+property float z
+property float nx
+property float ny
+property float nz
+element face 99994
+property list uint8 int32 vertex_index
+property list uint8 float texcoord
+end_header
